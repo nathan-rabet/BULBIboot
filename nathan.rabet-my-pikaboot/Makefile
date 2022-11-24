@@ -1,5 +1,16 @@
 NCORE?=8
 
+boot_mock:
+	qemu-system-aarch64 \
+	-machine virt \
+	-cpu cortex-a72 \
+	-kernel thirdparty/Image \
+	-initrd thirdparty/initramfs.cpio.gz \
+	-serial mon:stdio \
+	-m 2G \
+	-monitor telnet:127.0.0.1:55555,server,nowait;\
+	-smp 4
+
 .PHONY: thirdparties
 thirdparties: thirdparty/initramfs.cpio.gz thirdparty/Image
 	$(info Thirdparty builds finished !)
@@ -58,3 +69,4 @@ thirdparty/initramfs.cpio.gz: busybox-1.35.0/initramfs.cpio.gz thirdparty
 dependences:
 		sudo apt install -y gcc-aarch64-linux-gnu
 		sudo apt install -y bison
+		sudo apt install qemu-system-arm

@@ -3,3 +3,4 @@ busybox-*
 linux-*
 *.gz
 thirdparty/*
+*.log
