@@ -1,0 +1,5 @@
+*.tar*
+busybox-*
+linux-*
+*.gz
+thirdparty/*

@@ -23,7 +23,7 @@ linux-5.19.17:
 linux-5.19.17/.config: linux-5.19.17
 	cp cfg/linux_cfg $@
 
-linux-5.19.17/arch/arm64/boot/Image: linux-5.19.17/.config
+linux-5.19.17/arch/arm64/boot/Image: dependences linux-5.19.17/.config
 	cd linux-5.19.17/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image -j $(NCORE) && cd ..
 
 thirdparty:
@@ -32,18 +32,18 @@ thirdparty:
 thirdparty/Image: linux-5.19.17/arch/arm64/boot/Image thirdparty
 	cp $< $@
 
-busybox-1.35.0/.config: busybox-1.35.0
+busybox-1.35.0/.config: dependences busybox-1.35.0
 	cd busybox-1.35.0/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
 	cp cfg/busybox_cfg $@
 
-busybox-1.35.0/_install: busybox-1.35.0/.config
+busybox-1.35.0/_install: dependences busybox-1.35.0/.config
 	cd busybox-1.35.0 && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- install -j $(NCORE)
 
-busybox-1.35.0/initramfs: busybox-1.35.0/_install
+busybox-1.35.0/initramfs: dependences busybox-1.35.0/_install
 	mkdir -pv $@
 	cd $@ && for i in bin sbin etc proc sys usr/bin usr/sbin; do mkdir -pv $$i; done && cp -a ../_install/* .
 
-busybox-1.35.0/initramfs/init: busybox-1.35.0/initramfs
+busybox-1.35.0/initramfs/init: dependences busybox-1.35.0/initramfs
 	# cd busybox-1.35.0 && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- install -j $(NCORE)
 	cp cfg/busybox_init $@
 	chmod +x $@
@@ -54,4 +54,7 @@ busybox-1.35.0/initramfs.cpio.gz: busybox-1.35.0/initramfs/init
 thirdparty/initramfs.cpio.gz: busybox-1.35.0/initramfs.cpio.gz thirdparty
 	cp $< $@
 
-
+.PHONY: dependences
+dependences:
+		sudo apt install -y gcc-aarch64-linux-gnu
+		sudo apt install -y bison
