@@ -86,7 +86,7 @@ $(BUILD)/linux-5.19.17:
 $(BUILD)/linux-5.19.17/.config: $(BUILD)/linux-5.19.17
 	cp cfg/linux_cfg $@
 
-$(BUILD)/linux-5.19.17/arch/arm64/boot/Image: $(BUILD)/linux-5.19.17/.config dependences
+$(BUILD)/linux-5.19.17/arch/arm64/boot/Image: $(BUILD)/linux-5.19.17/.config
 	cd $(BUILD)/linux-5.19.17/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image -j $(NCORE) && cd ..
 
 $(BUILD)/thirdparty:
@@ -95,18 +95,18 @@ $(BUILD)/thirdparty:
 $(BUILD)/thirdparty/Image: $(BUILD)/linux-5.19.17/arch/arm64/boot/Image thirdparty
 	cp $< $@
 
-$(BUILD)/busybox-1.35.0/.config: $(BUILD)/busybox-1.35.0 dependences
+$(BUILD)/busybox-1.35.0/.config: $(BUILD)/busybox-1.35.0
 	cd $(BUILD)/busybox-1.35.0/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
 	cp cfg/busybox_cfg $@
 
-$(BUILD)/busybox-1.35.0/_install: $(BUILD)/busybox-1.35.0/.config dependences
+$(BUILD)/busybox-1.35.0/_install: $(BUILD)/busybox-1.35.0/.config
 	cd $(BUILD)/busybox-1.35.0 && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- install -j $(NCORE)
 
-$(BUILD)/busybox-1.35.0/initramfs: $(BUILD)/busybox-1.35.0/_install dependences
+$(BUILD)/busybox-1.35.0/initramfs: $(BUILD)/busybox-1.35.0/_install
 	mkdir -pv $@
 	cd $@ && for i in bin sbin etc proc sys usr/bin usr/sbin; do mkdir -pv $$i; done && cp -a ../_install/* .
 
-$(BUILD)/busybox-1.35.0/initramfs/init: $(BUILD)/busybox-1.35.0/initramfs dependences
+$(BUILD)/busybox-1.35.0/initramfs/init: $(BUILD)/busybox-1.35.0/initramfs
 	# cd $(BUILD)/busybox-1.35.0 && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- install -j $(NCORE)
 	cp cfg/busybox_init $@
 	chmod +x $@
