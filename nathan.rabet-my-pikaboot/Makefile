@@ -10,7 +10,9 @@ CC=$(CROSS_COMPILE)gcc
 LD=$(CROSS_COMPILE)ld
 AS=$(CROSS_COMPILE)as
 
-BOOTLOADER=pikaboot
+BOOTLOADER=$(BUILD)/pikaboot
+KERNEL=$(BUILD)/thirdparty/Image
+INITRD=$(BUILD)/thirdparty/initramfs.cpio.gz
 
 CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c -Iinclude
 LDFLAGS:=-nostdlib -T link.ld
@@ -23,25 +25,30 @@ OBJS = $(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
 $(BOOTLOADER): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
+pflash.bin: $(BOOTLOADER)
+	$(V)dd if=/dev/zero of=$@ bs=1M count=512
+	$(V)dd if=$< of=$@ conv=notrunc bs=1M count=20
+	$(V)dd if=$(KERNEL) of=$@ conv=notrunc bs=1M seek=50
+
 .PHONY: boot
-boot: $(BOOTLOADER) $(BUILD)/thirdparty/initramfs.cpio.gz
+boot: $(BOOTLOADER) $(INITRD)
 	qemu-system-aarch64 \
 	-machine virt \
 	-cpu cortex-a72 \
 	-kernel $(BOOTLOADER) \
-	-initrd $(BUILD)/thirdparty/initramfs.cpio.gz \
+	-initrd $(INITRD) \
 	-serial mon:stdio \
 	-m 2G \
 	-monitor telnet:127.0.0.1:55555,server,nowait;\
 	-smp 4
 
 .PHONY: boot_cheat
-boot_cheat: $(BUILD)/thirdparty/Image $(BUILD)/thirdparty/initramfs.cpio.gz
+boot_cheat: $(KERNEL) $(INITRD)
 	qemu-system-aarch64 \
 	-machine virt \
 	-cpu cortex-a72 \
-	-kernel $(BUILD)/thirdparty/Image \
-	-initrd $(BUILD)/thirdparty/initramfs.cpio.gz \
+	-kernel $(KERNEL) \
+	-initrd $(INITRD) \
 	-serial mon:stdio \
 	-m 2G \
 	-monitor telnet:127.0.0.1:55555,server,nowait;\
@@ -64,7 +71,7 @@ $(BUILD)/%.o: %.S
 # Thirdparties
 ################################################################################
 .PHONY: thirdparties
-thirdparties: $(BUILD)/thirdparty/initramfs.cpio.gz $(BUILD)/thirdparty/Image
+thirdparties: $(INITRD) $(KERNEL)
 	$(info Thirdparty builds finished !)
 
 .PHONY: distclean
@@ -92,7 +99,7 @@ $(BUILD)/linux-5.19.17/arch/arm64/boot/Image: $(BUILD)/linux-5.19.17/.config
 $(BUILD)/thirdparty:
 	mkdir -p $(BUILD)/thirdparty
 
-$(BUILD)/thirdparty/Image: $(BUILD)/linux-5.19.17/arch/arm64/boot/Image thirdparty
+$(KERNEL): $(BUILD)/linux-5.19.17/arch/arm64/boot/Image thirdparty
 	cp $< $@
 
 $(BUILD)/busybox-1.35.0/.config: $(BUILD)/busybox-1.35.0
@@ -114,7 +121,7 @@ $(BUILD)/busybox-1.35.0/initramfs/init: $(BUILD)/busybox-1.35.0/initramfs
 $(BUILD)/busybox-1.35.0/initramfs.cpio.gz: $(BUILD)/busybox-1.35.0/initramfs/init
 	cd $(BUILD)/busybox-1.35.0/initramfs && find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../initramfs.cpio.gz
 
-$(BUILD)/thirdparty/initramfs.cpio.gz: $(BUILD)/busybox-1.35.0/initramfs.cpio.gz $(BUILD)/thirdparty
+$(INITRD): $(BUILD)/busybox-1.35.0/initramfs.cpio.gz $(BUILD)/thirdparty
 	cp $< $@
 
 ################################################################################

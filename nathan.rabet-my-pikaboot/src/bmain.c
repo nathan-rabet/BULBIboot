@@ -1,41 +1,49 @@
 #include <stdint.h>
+#include <string.h>
 
 #include "asm.h"
 #include "uart.h"
 
+#define BUF_SIZE 1024
+
 void bmain(void)
 {
-    uint64_t a = 0xA;
-    uint64_t b = 0xB;
-    (void)a;
-    (void)b;
+    char buf[BUF_SIZE] = { 0 };
 
-    char c = '\r';
-    uint32_t console_char_counter = 0;
+    uint32_t console_char_i = 0;
+
+    kputs("\r\n");
+    kputs("pikaboot <3 ");
     while (1)
     {
+        char c = kgetc();
+
         // In case of newline
         if (c == '\r' || c == '\n')
         {
+            console_char_i = 0;
+
             kputs("\r\n");
             kputs("pikaboot <3 ");
         }
 
-        c = kgetc();
-
         // In case of deletion character
-        if (c == 0x7F)
+        else if (c == 0x7F)
         {
-            if (console_char_counter > 0)
+            if (console_char_i > 0)
             {
                 kputs("\b \b");
-                console_char_counter--;
+                console_char_i--;
             }
         }
-        else
+
+        // In case of normal character
+        else if (console_char_i < BUF_SIZE)
         {
+            buf[console_char_i++] = c;
             kputc(c);
-            console_char_counter++;
         }
+
+        (void)buf;
     }
 }
