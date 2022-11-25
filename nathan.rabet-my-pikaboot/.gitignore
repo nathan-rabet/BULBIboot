@@ -4,3 +4,6 @@ linux-*
 *.gz
 thirdparty/*
 *.log
+pikaboot
+*.o
+build/*
