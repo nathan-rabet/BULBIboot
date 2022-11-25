@@ -29,7 +29,7 @@ boot: $(BOOTLOADER) $(BUILD)/thirdparty/initramfs.cpio.gz
 	-machine virt \
 	-cpu cortex-a72 \
 	-kernel $(BOOTLOADER) \
-	-initrd thirdparty/initramfs.cpio.gz \
+	-initrd $(BUILD)/thirdparty/initramfs.cpio.gz \
 	-serial mon:stdio \
 	-m 2G \
 	-monitor telnet:127.0.0.1:55555,server,nowait;\
@@ -40,8 +40,8 @@ boot_cheat: $(BUILD)/thirdparty/Image $(BUILD)/thirdparty/initramfs.cpio.gz
 	qemu-system-aarch64 \
 	-machine virt \
 	-cpu cortex-a72 \
-	-kernel thirdparty/Image \
-	-initrd thirdparty/initramfs.cpio.gz \
+	-kernel $(BUILD)/thirdparty/Image \
+	-initrd $(BUILD)/thirdparty/initramfs.cpio.gz \
 	-serial mon:stdio \
 	-m 2G \
 	-monitor telnet:127.0.0.1:55555,server,nowait;\
@@ -107,7 +107,7 @@ $(BUILD)/busybox-1.35.0/initramfs: $(BUILD)/busybox-1.35.0/_install
 	cd $@ && for i in bin sbin etc proc sys usr/bin usr/sbin; do mkdir -pv $$i; done && cp -a ../_install/* .
 
 $(BUILD)/busybox-1.35.0/initramfs/init: $(BUILD)/busybox-1.35.0/initramfs
-	# cd $(BUILD)/busybox-1.35.0 && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- install -j $(NCORE)
+	cd $(BUILD)/busybox-1.35.0 && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- install -j $(NCORE)
 	cp cfg/busybox_init $@
 	chmod +x $@
 

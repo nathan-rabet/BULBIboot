@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 
-void kputchar(char c);
+void kputc(char c);
+
+char kgetc();
 
 void kputs(const char *s);
 
