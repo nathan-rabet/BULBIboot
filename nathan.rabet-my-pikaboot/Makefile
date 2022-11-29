@@ -1,5 +1,5 @@
 NCORE?=$(shell nproc)
-BUILD = build
+BUILD=build
 
 ################################################################################
 # BOOTLOADER
@@ -10,53 +10,64 @@ CC=$(CROSS_COMPILE)gcc
 LD=$(CROSS_COMPILE)ld
 AS=$(CROSS_COMPILE)as
 
-BOOTLOADER=$(BUILD)/pikaboot
-KERNEL=$(BUILD)/thirdparty/Image
-INITRD=$(BUILD)/thirdparty/initramfs.cpio.gz
+BOOTLOADER_ELF=pikaboot.elf
+BOOTLOADER_IMG=pikaboot.img
+BOOTLOADER_BIN=pflash.bin
+
+KERNEL_PATH=$(BUILD)/thirdparty/Image
+INITRD_PATH=$(BUILD)/thirdparty/initramfs.cpio.gz
 
 CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c -Iinclude
 LDFLAGS:=-nostdlib -T link.ld
 
-SRC_C = $(shell find src -name '*.c')
-SRC_S = $(shell find src -name '*.S')
+SRC_C=$(shell find src -name '*.c')
+SRC_S=$(shell find src -name '*.S')
 
-OBJS = $(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
+OBJS=$(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
 
-$(BOOTLOADER): $(OBJS)
+$(BUILD)/$(BOOTLOADER_ELF): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
-pflash.bin: $(BOOTLOADER)
+$(BUILD)/$(BOOTLOADER_IMG): $(BUILD)/$(BOOTLOADER_ELF)
+	$(CROSS_COMPILE)objcopy -O binary $< $@
+
+$(BUILD)/$(BOOTLOADER_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
 	$(V)dd if=/dev/zero of=$@ bs=1M count=512
-	$(V)dd if=$< of=$@ conv=notrunc bs=1M count=20
-	$(V)dd if=$(KERNEL) of=$@ conv=notrunc bs=1M seek=50
+	$(V)dd if=$(BUILD)/$(BOOTLOADER_IMG) of=$@ conv=notrunc bs=1M count=20
+	$(V)dd if=$(KERNEL_PATH) of=$@ conv=notrunc bs=1M seek=50
+
+$(BOOTLOADER_BIN): $(BUILD)/$(BOOTLOADER_BIN)
+	
 
 .PHONY: boot
-boot: $(BOOTLOADER) $(INITRD)
+boot: $(BUILD)/$(BOOTLOADER_BIN) $(INITRD_PATH)
 	qemu-system-aarch64 \
 	-machine virt \
+	-nographic \
 	-cpu cortex-a72 \
-	-kernel $(BOOTLOADER) \
-	-initrd $(INITRD) \
+	-kernel $(BUILD)/$(BOOTLOADER_BIN) \
+	-initrd $(INITRD_PATH) \
 	-serial mon:stdio \
 	-m 2G \
-	-monitor telnet:127.0.0.1:55555,server,nowait;\
-	-smp 4
+	-smp 4 \
+	-D qemu.log \
+	-d in_asm
 
 .PHONY: boot_cheat
-boot_cheat: $(KERNEL) $(INITRD)
+boot_cheat: $(KERNEL_PATH) $(INITRD_PATH)
 	qemu-system-aarch64 \
 	-machine virt \
 	-cpu cortex-a72 \
-	-kernel $(KERNEL) \
-	-initrd $(INITRD) \
+	-kernel $(KERNEL_PATH) \
+	-initrd $(INITRD_PATH) \
 	-serial mon:stdio \
 	-m 2G \
 	-monitor telnet:127.0.0.1:55555,server,nowait;\
 	-smp 4
 
-
-$(BOOTLOADER)clean:
-	$(RM) $(shell find build/src -name '*.o') $(BOOTLOADER)
+PHONY: binclean
+binclean:
+	$(RM) $(shell find build/src -name '*.o') $(BUILD)/$(BOOTLOADER_ELF) $(BUILD)/$(BOOTLOADER_IMG)
 
 # object files
 $(BUILD)/%.o: %.c
@@ -71,20 +82,13 @@ $(BUILD)/%.o: %.S
 # Thirdparties
 ################################################################################
 .PHONY: thirdparties
-thirdparties: $(INITRD) $(KERNEL)
+thirdparties: $(INITRD_PATH) $(KERNEL_PATH)
 	$(info Thirdparty builds finished !)
-
-.PHONY: distclean
-distclean:
-	rm -rf $(BUILD)/busybox-* $(BUILD)/linux-*
-
-.PHONY: thirdpartyclean
-thirdpartyclean:
-	rm -rf $(BUILD)/thirdparty
 
 $(BUILD)/busybox-1.35.0:
 	curl -LO https://busybox.net/downloads/busybox-1.35.0.tar.bz2 --output $(BUILD)/busybox-1.35.0.tar.bz2
 	tar jxvf $(BUILD)/busybox-1.35.0.tar.bz2 -C $(BUILD)
+	cp cfg/busybox_cfg $(BUILD)/busybox-1.35.0/.config
 
 $(BUILD)/linux-5.19.17:
 	wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.19.17.tar.xz --output-document=$(BUILD)/linux-5.19.17.tar.xz
@@ -121,7 +125,7 @@ $(BUILD)/busybox-1.35.0/initramfs/init: $(BUILD)/busybox-1.35.0/initramfs
 $(BUILD)/busybox-1.35.0/initramfs.cpio.gz: $(BUILD)/busybox-1.35.0/initramfs/init
 	cd $(BUILD)/busybox-1.35.0/initramfs && find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../initramfs.cpio.gz
 
-$(INITRD): $(BUILD)/busybox-1.35.0/initramfs.cpio.gz $(BUILD)/thirdparty
+$(INITRD_PATH): $(BUILD)/busybox-1.35.0/initramfs.cpio.gz $(BUILD)/thirdparty
 	cp $< $@
 
 ################################################################################

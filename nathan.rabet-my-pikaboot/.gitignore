@@ -7,3 +7,5 @@ thirdparty/*
 pikaboot
 *.o
 build/*
+*.bin
+*.dump
