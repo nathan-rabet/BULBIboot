@@ -6,9 +6,8 @@ _start:
     ldr x30, =STACK_TOP
     mov sp, x30
 
-    // Call bmain function
-    bl bmain
+    // Call kmain function
+    bl kmain
 
-.hang:
-    b .hang
-
+.halt:
+    hlt #0

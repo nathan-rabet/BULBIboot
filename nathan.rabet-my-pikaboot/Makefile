@@ -49,9 +49,8 @@ boot: $(BUILD)/$(BOOTLOADER_BIN) $(INITRD_PATH)
 	-initrd $(INITRD_PATH) \
 	-serial mon:stdio \
 	-m 2G \
-	-smp 4 \
-	-D qemu.log \
-	-d in_asm
+	-monitor telnet:127.0.0.1:55555,server,nowait; \
+	-smp 4
 
 .PHONY: boot_cheat
 boot_cheat: $(KERNEL_PATH) $(INITRD_PATH)

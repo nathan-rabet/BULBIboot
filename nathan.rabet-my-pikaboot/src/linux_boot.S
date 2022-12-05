@@ -7,7 +7,7 @@ linux_boot:
     // FUNCTION CALL PARAMETERS
     // ------------------------
     // x0 = dtb
-    // x1 = QEMU bmain offset
+    // x1 = QEMU kmain offset
     // ------------------------
 
     //
