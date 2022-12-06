@@ -9,3 +9,6 @@ pikaboot
 build/*
 *.bin
 *.dump
+*.hex
+*dtb
+*dts

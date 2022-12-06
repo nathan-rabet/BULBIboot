@@ -2,8 +2,10 @@
 #include "int.h"
 #include "kstring.h"
 #include "memdump.h"
+#include "memtest.h"
 #include "number.h"
 #include "uart.h"
+#include "virt.h"
 
 #define BUF_SIZE 1024
 
@@ -40,6 +42,8 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
                 kputs("\tmd \t\tDump memory" CRLF);
                 kputs("\t\tUsage: md <start address> <range> <load size>" CRLF);
                 kputs("\tmemtest\t\tRun a memory test" CRLF);
+                kputs("\t\tUsage: memtest [<start address> <range> "
+                      "<granularity>]" CRLF);
             }
 
             else if (strncmp("md", buf, 2) == 0)
@@ -68,6 +72,33 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
                 extern void linux_boot(u64, u64);
                 linux_boot(dtb, kmain_addr);
             }
+
+            else if (strncmp("memtest", buf, 7) == 0)
+            {
+                char *buf_tok = NULL;
+
+                u64 start_addr = (u64)strtok_r(buf + 7, " ", &buf_tok);
+                u64 size = (u64)strtok_r(NULL, " ", &buf_tok);
+                u64 granularity = (u64)strtok_r(NULL, " ", &buf_tok);
+
+                if (!is_number((char *)start_addr) || !start_addr)
+                    start_addr = RAM_START;
+                else
+                    start_addr = numtoi64((char *)start_addr);
+                if (!is_number((char *)size) || !size)
+                    size = 0x1000;
+                else
+                    size = numtoi64((char *)size);
+                if (!is_number((char *)granularity) || !granularity)
+                    granularity = 1;
+                else
+                    granularity = numtoi64((char *)granularity);
+
+                memtest(start_addr, size, granularity);
+            }
+
+            else
+                kputs(CRLF "Unknown command" CRLF);
 
             // Reset buffer
             memset(buf, 0, BUF_SIZE);

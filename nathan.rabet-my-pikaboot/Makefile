@@ -17,7 +17,12 @@ BOOTLOADER_BIN=pflash.bin
 KERNEL_PATH=$(BUILD)/thirdparty/Image
 INITRD_PATH=$(BUILD)/thirdparty/initramfs.cpio.gz
 
-CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c -Iinclude
+RAM_SIZE_GB?=2
+KERNEL_SIZE_MB?=$(shell du -m $(KERNEL_PATH) | cut -f1)
+BOOTLOADER_SIZE_MB?=$(shell du -m $(BOOTLOADER_IMG) | cut -f1)
+
+CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c -Iinclude 
+CFLAGS += -DRAM_SIZE_GB=$(RAM_SIZE_GB) -DKERNEL_SIZE_MB=$(KERNEL_SIZE_MB) -DBOOTLOADER_SIZE_MB=$(BOOTLOADER_SIZE_MB)
 LDFLAGS:=-nostdlib -T link.ld
 
 SRC_C=$(shell find src -name '*.c')
@@ -48,8 +53,8 @@ boot: $(BUILD)/$(BOOTLOADER_BIN) $(INITRD_PATH)
 	-kernel $(BUILD)/$(BOOTLOADER_BIN) \
 	-initrd $(INITRD_PATH) \
 	-serial mon:stdio \
-	-m 2G \
-	-monitor telnet:127.0.0.1:55555,server,nowait; \
+	-m $(RAM_SIZE_GB)G \
+	-monitor telnet:127.0.0.1:55555,server,nowait \
 	-smp 4
 
 .PHONY: boot_cheat
@@ -60,8 +65,8 @@ boot_cheat: $(KERNEL_PATH) $(INITRD_PATH)
 	-kernel $(KERNEL_PATH) \
 	-initrd $(INITRD_PATH) \
 	-serial mon:stdio \
-	-m 2G \
-	-monitor telnet:127.0.0.1:55555,server,nowait;\
+	-m $(RAM_SIZE_GB)G \
+	-monitor telnet:127.0.0.1:55555,server,nowait \
 	-smp 4
 
 PHONY: binclean

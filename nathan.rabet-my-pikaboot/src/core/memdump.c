@@ -24,47 +24,49 @@ void memdump(u64 start_addr, u64 range, u64 load_size)
     }
 
     // Align start_addr with load_size
-    start_addr = RAM_START + start_addr - (start_addr % load_size);
+    start_addr = start_addr - (start_addr % load_size);
 
     for (u64 i = 0; i < range; i += MEMDUMP_LINE_SIZE)
     {
         kputs(CRLF);
 
         // Left side: address
-        kputs(aligned_numtoi64(itoa64hex(start_addr + i - RAM_START),
-                               MEMDUMP_LINE_SIZE));
+        kputs(aligned_numtoi64(itoa64hex(start_addr + i), MEMDUMP_LINE_SIZE));
         kputs(":\t");
 
         // Middle side: print the memory as hex
         char line[MEMDUMP_LINE_SIZE] = { 0 };
-        for (u8 j = 0; j < MEMDUMP_LINE_SIZE; j++)
+        for (u8 j = 0; j < MEMDUMP_LINE_SIZE; j += load_size)
         {
             char *addr = (char *)start_addr + i + j;
             if (i + j < range)
             {
-                line[j] = *addr;
-                kputs(aligned_numtoi64(itoa64hex_no0x_ptr(addr, sizeof(char)),
-                                       sizeof(char) * 2));
+                for (u8 k = 0; k < load_size; k++)
+                    line[j + k] = addr[k];
+
+                kputs(aligned_numtoi64(itoa64hex_no0x_ptr(addr, load_size),
+                                       load_size * 2));
             }
             else
-                for (u8 k = 0; k < sizeof(char) * 2; k++)
+                for (u8 k = 0; k < load_size * 2; k++)
                     kputc(' ');
 
-            // Print a space each load_size
-            if ((j + 1) % load_size == 0)
-                kputc(' ');
+            kputc(' ');
         }
 
-        kputs("\t| ");
+        kputs("| ");
 
         // Right side: print the memory as ascii
-        for (u8 i = 0; i < MEMDUMP_LINE_SIZE; i++)
+        for (u8 j = 0; j < MEMDUMP_LINE_SIZE; j++)
         {
             // Printable characters
-            if (line[i] >= 32 && line[i] <= 126)
-                kputc(line[i]);
+            if (i + j < range)
+                if (line[j] >= 32 && line[j] <= 126)
+                    kputc(line[j]);
+                else
+                    kputc('.');
             else
-                kputc('.');
+                kputc(' ');
         }
         kputs(" |");
     }
