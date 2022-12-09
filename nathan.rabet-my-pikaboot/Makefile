@@ -19,9 +19,9 @@ INITRD_PATH=$(BUILD)/thirdparty/initramfs.cpio.gz
 
 RAM_SIZE_GB?=2
 KERNEL_SIZE_MB?=$(shell du -m $(KERNEL_PATH) | cut -f1)
-BOOTLOADER_SIZE_MB?=$(shell du -m $(BOOTLOADER_IMG) | cut -f1)
+BOOTLOADER_SIZE_MB?=$(shell du -m $(BUILD)/$(BOOTLOADER_IMG) | cut -f1)
 
-CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c -Iinclude 
+CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c -Iinclude -I.
 CFLAGS += -DRAM_SIZE_GB=$(RAM_SIZE_GB) -DKERNEL_SIZE_MB=$(KERNEL_SIZE_MB) -DBOOTLOADER_SIZE_MB=$(BOOTLOADER_SIZE_MB)
 LDFLAGS:=-nostdlib -T link.ld
 
@@ -29,6 +29,9 @@ SRC_C=$(shell find src -name '*.c')
 SRC_S=$(shell find src -name '*.S')
 
 OBJS=$(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
+
+all: boot
+
 
 $(BUILD)/$(BOOTLOADER_ELF): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
@@ -42,7 +45,7 @@ $(BUILD)/$(BOOTLOADER_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
 	$(V)dd if=$(KERNEL_PATH) of=$@ conv=notrunc bs=1M seek=50
 
 $(BOOTLOADER_BIN): $(BUILD)/$(BOOTLOADER_BIN)
-	
+
 
 .PHONY: boot
 boot: $(BUILD)/$(BOOTLOADER_BIN) $(INITRD_PATH)
@@ -52,25 +55,24 @@ boot: $(BUILD)/$(BOOTLOADER_BIN) $(INITRD_PATH)
 	-cpu cortex-a72 \
 	-kernel $(BUILD)/$(BOOTLOADER_BIN) \
 	-initrd $(INITRD_PATH) \
-	-serial mon:stdio \
+	-serial pty \
+	-monitor telnet:localhost:4444,server,nowait \
 	-m $(RAM_SIZE_GB)G \
-	-monitor telnet:127.0.0.1:55555,server,nowait \
-	-smp 4
+	-smp 2
 
-.PHONY: boot_cheat
-boot_cheat: $(KERNEL_PATH) $(INITRD_PATH)
-	qemu-system-aarch64 \
-	-machine virt \
-	-cpu cortex-a72 \
-	-kernel $(KERNEL_PATH) \
-	-initrd $(INITRD_PATH) \
-	-serial mon:stdio \
-	-m $(RAM_SIZE_GB)G \
-	-monitor telnet:127.0.0.1:55555,server,nowait \
-	-smp 4
+# .PHONY: boot_cheat
+# boot_cheat: $(KERNEL_PATH) $(INITRD_PATH)
+# 	qemu-system-aarch64 \
+# 	-machine virt \
+# 	-cpu cortex-a72 \
+# 	-kernel $(KERNEL_PATH) \
+# 	-initrd $(INITRD_PATH) \
+# 	-serial mon:stdio \
+# 	-m $(RAM_SIZE_GB)G \
+# 	-smp 4
 
-PHONY: binclean
-binclean:
+PHONY: clean
+clean:
 	$(RM) $(shell find build/src -name '*.o') $(BUILD)/$(BOOTLOADER_ELF) $(BUILD)/$(BOOTLOADER_IMG)
 
 # object files

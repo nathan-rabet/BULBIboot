@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "virt.h": "c",
+        "uart.h": "c",
+        "stdint.h": "c"
+    }
+}

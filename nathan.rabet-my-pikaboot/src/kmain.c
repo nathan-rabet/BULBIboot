@@ -1,4 +1,5 @@
 #include "asm.h"
+#include "emergency_boot.h"
 #include "int.h"
 #include "kstring.h"
 #include "memdump.h"
@@ -24,6 +25,9 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
     char buf[BUF_SIZE] = { 0 };
     u32 buf_i = 0;
 
+    // Setup UART0
+    pl011_setup((volatile uart_t *)UART0_ADDR);
+
     PIKABOOT_CONSOLE();
     while (1)
     {
@@ -44,6 +48,9 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
                 kputs("\tmemtest\t\tRun a memory test" CRLF);
                 kputs("\t\tUsage: memtest [<start address> <range> "
                       "<granularity>]" CRLF);
+                kputs(
+                    "\temergency_boot\tDownload the firmware using the "
+                    "serial port (via the kermin protocol) and boot it." CRLF);
             }
 
             else if (strncmp("md", buf, 2) == 0)
@@ -95,6 +102,12 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
                     granularity = numtoi64((char *)granularity);
 
                 memtest(start_addr, size, granularity);
+            }
+
+            else if (strcmp("emergency_boot", buf) == 0)
+            {
+                kputs(CRLF "Entering emergency boot..." CRLF);
+                emergency_boot();
             }
 
             else
