@@ -81,7 +81,7 @@ void pl011_setup(volatile uart_t *uart_addr);
  * @param uart_addr The address of the UART (MMIO)
  * @return u64 size if success, -1 otherwise
  */
-u64 uart_write(unsigned char *buf, u64 size, volatile uart_t *uart_addr);
+u64 uart_write(const unsigned char *buf, u64 size, volatile uart_t *uart_addr);
 
 /**
  * @brief Read a buffer from the UART

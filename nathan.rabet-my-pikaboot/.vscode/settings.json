@@ -23,7 +23,11 @@
         "ratio": "c",
         "kermit.h": "c",
         "virtboardio.h": "c",
-        "kassert.h": "c"
+        "kassert.h": "c",
+        "number.h": "c",
+        "param.h": "c",
+        "crc32.h": "c",
+        "ascii.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

@@ -1,118 +1,132 @@
 #include "emergency_boot.h"
 
+#include "ascii.h"
 #include "asm.h"
-#include "debug.h"
+#include "crc32.h"
 #include "int.h"
-#include "kermit.h"
+#include "kassert.h"
 #include "kstring.h"
 #include "number.h"
 #include "uart.h"
-#include "kassert.h"
-#include "virtboardio.h"
 
-static int kermit_receive(unsigned char *const input_buffer,
-                          int intput_buffer_size)
+#define PACKET_MAX_SIZE 1024
+
+const unsigned char soh = SOH;
+
+// Packed struct
+struct emergency_packet
 {
-    struct k_data k; /* Kermit data structure */
-    short r_slot; /* Kermit receive slot */
+    u8 ctrl_c;
+    u64 size;
+    u32 crc;
+    char data[PACKET_MAX_SIZE];
+} __attribute__((packed));
 
-    k.xfermode = 0; /* Text/binary automatic/manual  */
-    k.remote = 1; /* Remote vs local */
-    k.binary = 1; /* 0 = text, 1 = binary */
-    k.parity = P_PARITY; /* Communications parity */
-    k.bct = 3; /* Block check type */
-    k.ikeep = 0; /* Keep incompletely received files */
-    k.filelist = NULL; /* List of files to send (if any) */
-    k.cancel = 0; /* Not canceled yet */
-    k.dbf = 0; /* Debugging flag */
+static void send_packet(volatile uart_t *emergency_uart, u8 ctrl_c,
+                        const unsigned char *buf, u64 size)
+{
+    struct emergency_packet packet = {
+        .ctrl_c = ctrl_c, .size = size, .crc = crc32(buf, size), .data = { 0 }
+    };
+    memcpy(packet.data, buf, size);
+    uart_write((unsigned char *)&packet,
+               sizeof(u8) + sizeof(u64) + sizeof(u32) + size, emergency_uart);
+}
 
-    /*  Fill in the i/o pointers  */
-    extern UCHAR o_buf[];
-    k.zinbuf = input_buffer; /* File input buffer */
-    k.zinlen = intput_buffer_size; /* File input buffer length */
-    k.zincnt = 0; /* File input buffer position */
-    k.obuf = o_buf; /* File output buffer */
-    k.obuflen = OBUFLEN; /* File output buffer length */
-    k.obufpos = 0; /* File output buffer position */
+static struct emergency_packet receive_packet(volatile uart_t *emergency_uart)
+{
+    struct emergency_packet packet = { 0 };
 
-    /* Fill in function pointers */
-    k.rxd = readpkt; /* for reading packets */
-    k.txd = tx_data; /* for sending packets */
-    k.ixd = inchk; /* for checking connection */
-    k.openf = openfile; /* for opening files */
-    k.finfo = fileinfo; /* for getting file info */
-    k.readf = readfile; /* for reading files */
-    k.writef = writefile; /* for writing to output file */
-    k.closef = closefile; /* for closing files */
-#ifdef DEBUG
-    k.dbf = dodebug; /* for debugging */
-#else
-    k.dbf = 0;
-#endif /* DEBUG */
+    // Get the size of the packet
+    u64 size = 0;
+    while (size < (sizeof(struct emergency_packet) - sizeof(packet.data)))
+        size += uart_read((unsigned char *)&packet + size,
+                          sizeof(u8) + sizeof(u64) + sizeof(u32) - size,
+                          emergency_uart);
+    u64 packet_data_size = packet.size;
 
-    struct k_response r; /* Kermit response structure */
-    int kermit_status = kermit(K_INIT, &k, 0, 0, "", &r);
-    debug(DB_LOG, "init status:", 0, status);
-    debug(DB_LOG, "version:", k.version, 0);
+    // Get the data of the packet
+    size = 0;
+    while (size < packet_data_size)
+        size += uart_read((unsigned char *)packet.data + size, packet_data_size,
+                          emergency_uart);
 
-    if (kermit_status == X_ERROR)
-        return FAILURE;
-
-    while (kermit_status != X_DONE)
+    // Ask for the packet again if the CRC is incorrect
+    while (crc32(packet.data, packet.size) != packet.crc)
     {
-        UCHAR *inbuf = getrslot(&k, &r_slot); /* Allocate a window slot */
-        int rx_len = k.rxd(&k, inbuf, P_PKTLEN); /* Try to read a packet */
-        debug(DB_PKT, "main packet", &(k.ipktbuf[0][r_slot]), rx_len);
-
-        if (rx_len < 1)
-        { /* No data was read */
-            freerslot(&k, r_slot); /* So free the window slot */
-            if (rx_len < 0) /* If there was a fatal error */
-                return FAILURE; /* Return with error */
-        }
-
-        switch (kermit_status = kermit(K_RUN, &k, r_slot, rx_len, "", &r))
-        {
-        case X_OK:
-            debug(DB_LOG, "NAME", r.filename ? (char *)r.filename : "(NULL)",
-                  0);
-            debug(DB_LOG, "DATE", r.filedate ? (char *)r.filedate : "(NULL)",
-                  0);
-            debug(DB_LOG, "SIZE", 0, r.filesize);
-            debug(DB_LOG, "STATE", 0, r.status);
-            debug(DB_LOG, "SOFAR", 0, r.sofar);
-        case X_DONE:
-            debug(DB_LOG, "DONE", 0, 0);
-            return SUCCESS;
-        case X_ERROR:
-            debug(DB_LOG, "ERROR", 0, 0);
-            return FAILURE;
-        }
+        send_packet(emergency_uart, NAK, NULL, 0);
+        packet = receive_packet(emergency_uart);
     }
 
-    return SUCCESS;
+    send_packet(emergency_uart, ACK, NULL, 0);
+    return packet;
+}
+
+static u64 initiate_file_transfer(volatile uart_t *emergency_uart)
+{
+    struct emergency_packet hello_packet = receive_packet(emergency_uart);
+
+    // Check if the hello packet is correct
+    if (hello_packet.ctrl_c != ENQ)
+        return (u64)-1;
+
+    struct emergency_packet file_size_packet = receive_packet(emergency_uart);
+
+    return *((u64 *)file_size_packet.data);
+}
+
+static void receive_file(volatile uart_t *emergency_uart, u64 file_size)
+{
+    unsigned char transfered_file[file_size];
+    u64 transfered_file_size = 0;
+
+    // -------------------------------------------------------------------------
+    // WAIT FOR FILE PACKET
+    // -------------------------------------------------------------------------
+    struct emergency_packet file_packet = { 0 };
+    while (file_packet.ctrl_c != EOT && transfered_file_size < file_size)
+    {
+        file_packet = receive_packet(emergency_uart);
+
+        // Check if the file packet is the last one
+        if (file_packet.ctrl_c == EOT)
+            break;
+
+        // Copy the file packet data into the transfered file
+        memcpy(transfered_file + transfered_file_size, file_packet.data,
+               file_packet.size);
+
+        transfered_file_size += file_packet.size;
+    }
+
+    // ------------------------------------------------------------------------
+    // PRINT FILE
+    // ------------------------------------------------------------------------
+    uart_write(transfered_file, transfered_file_size, emergency_uart);
 }
 
 void emergency_boot(void)
 {
     volatile uart_t *emergency_uart = (volatile uart_t *)UART0_ADDR;
-    unsigned char transfered_kernel[0x3200000] = {0};
-    // Buffer of 50 MiB
-    // Setup UART0 (in case of misconfiguration)
+
+    // Setup UART (in case of misconfiguration)
     pl011_setup(emergency_uart);
 
-    // Start kermit
-    kputs("Waiting for kermit transfer..." CRLF);
-    switch (kermit_receive(transfered_kernel, sizeof(transfered_kernel)))
-    {
-    case SUCCESS:
-        kputs("Kermit transfer successful" CRLF);
-        kputs((char*)transfered_kernel);
-        break;
-    case FAILURE:
-        kputs("Kermit transfer failed" CRLF);
-        break;
-    default:
-        kassert(0);
-    }
+    // Disable interrupts
+    uart_disable_interrupts(emergency_uart);
+
+    u64 file_size = initiate_file_transfer(emergency_uart);
+    if (file_size != (u64)-1)
+        receive_file(emergency_uart, file_size);
+
+    // Re-enable interrupts
+    uart_enable_interrupts(emergency_uart);
+
+    // Flush the UART
+    unsigned char c = 0;
+    while (uart_read(&c, 1, emergency_uart) != 0)
+        ;
+
+    // Re-setup UART
+    pl011_setup(emergency_uart);
 }

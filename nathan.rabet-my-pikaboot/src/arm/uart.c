@@ -58,7 +58,7 @@ void pl011_setup(volatile uart_t *uart_addr)
 }
 
 #define LOOP_BREAKER 100
-u64 uart_write(unsigned char *buf, u64 size, volatile uart_t *uart_addr)
+u64 uart_write(const unsigned char *buf, u64 size, volatile uart_t *uart_addr)
 {
     // Chek if UART is enabled
     if (!check_uart_enabled(uart_addr))

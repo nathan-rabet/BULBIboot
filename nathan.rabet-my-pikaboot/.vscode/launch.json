@@ -4,7 +4,7 @@
         {
             "type": "gdb",
             "request": "attach",
-            "name": "Attach GDB - pikaboot",
+            "name": "GDB - QEMU",
             "executable": "${workspaceFolder}/build/pikaboot.elf",
             "target": "localhost:6666",
             "remote": true,
@@ -13,6 +13,26 @@
             "gdbpath": "/usr/bin/gdb-multiarch",
             "valuesFormatting": "prettyPrinters",
             // "preLaunchTask": "make boot (gdb)"
+        },
+        {
+            "name": "PYTHON - Emergency boot server",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/emergency_server.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/dev/pts/${input:pts}",
+                "hello.txt"
+            ],
+            "justMyCode": true
+        }
+    ],
+    "inputs": [
+        {
+            "id": "pts",
+            "type": "promptString",
+            "description": "Enter the pts number of the serial port",
+            "default": "1"
         }
     ]
 }
