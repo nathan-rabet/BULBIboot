@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "make boot (gdb)",
+            "type": "shell",
+            "command": "make boot QEMU_ADDITIONAL_FLAGS=\"-gdb tcp::6666 -S\"",
+            "isBackground": true
+        }
+    ]
+}

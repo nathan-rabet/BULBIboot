@@ -21,8 +21,12 @@ RAM_SIZE_GB?=2
 KERNEL_SIZE_MB?=$(shell du -m $(KERNEL_PATH) | cut -f1)
 BOOTLOADER_SIZE_MB?=$(shell du -m $(BUILD)/$(BOOTLOADER_IMG) | cut -f1)
 
-CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c -Iinclude -I.
+KERMIT_FLAGS= -DNODEBUG
+
+CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c 
+CFLAGS += -Iinclude -I./src/modules/kermit
 CFLAGS += -DRAM_SIZE_GB=$(RAM_SIZE_GB) -DKERNEL_SIZE_MB=$(KERNEL_SIZE_MB) -DBOOTLOADER_SIZE_MB=$(BOOTLOADER_SIZE_MB)
+CFLAGS += -DNODEBUG
 LDFLAGS:=-nostdlib -T link.ld
 
 SRC_C=$(shell find src -name '*.c')
@@ -39,13 +43,15 @@ $(BUILD)/$(BOOTLOADER_ELF): $(OBJS)
 $(BUILD)/$(BOOTLOADER_IMG): $(BUILD)/$(BOOTLOADER_ELF)
 	$(CROSS_COMPILE)objcopy -O binary $< $@
 
-$(BUILD)/$(BOOTLOADER_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
+$(BUILD)/$(BOOTLOADER_BIN): $(BUILD)/$(BOOTLOADER_ELF) $(KERNEL_PATH)
 	$(V)dd if=/dev/zero of=$@ bs=1M count=512
-	$(V)dd if=$(BUILD)/$(BOOTLOADER_IMG) of=$@ conv=notrunc bs=1M count=20
+	$(V)dd if=$< of=$@ conv=notrunc bs=1M count=20
 	$(V)dd if=$(KERNEL_PATH) of=$@ conv=notrunc bs=1M seek=50
 
 $(BOOTLOADER_BIN): $(BUILD)/$(BOOTLOADER_BIN)
 
+boot_gdb:
+	$(MAKE) boot QEMU_ADDITIONAL_FLAGS="-gdb tcp::6666 -S"
 
 .PHONY: boot
 boot: $(BUILD)/$(BOOTLOADER_BIN) $(INITRD_PATH)
@@ -55,10 +61,14 @@ boot: $(BUILD)/$(BOOTLOADER_BIN) $(INITRD_PATH)
 	-cpu cortex-a72 \
 	-kernel $(BUILD)/$(BOOTLOADER_BIN) \
 	-initrd $(INITRD_PATH) \
-	-serial pty \
+	-serial mon:stdio \
 	-monitor telnet:localhost:4444,server,nowait \
 	-m $(RAM_SIZE_GB)G \
-	-smp 2
+	-D qemu.log \
+	-d in_asm \
+	-smp 2 \
+	$(QEMU_ADDITIONAL_FLAGS)
+
 
 # .PHONY: boot_cheat
 # boot_cheat: $(KERNEL_PATH) $(INITRD_PATH)

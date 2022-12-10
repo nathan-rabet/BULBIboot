@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        // Join GDB to QEMU
+        {
+            "type": "gdb",
+            "request": "attach",
+            "name": "Attach GDB - pikaboot",
+            "executable": "${workspaceFolder}/build/pikaboot.elf",
+            "target": "localhost:6666",
+            "remote": true,
+            "cwd": "${workspaceFolder}",
+            "showDevDebugOutput": false,
+            "gdbpath": "/usr/bin/gdb-multiarch",
+            "valuesFormatting": "prettyPrinters",
+            //"preLaunchTask": "make boot (gdb)"
+        }
+    ]
+}
