@@ -1,6 +1,8 @@
 #ifndef EMERGENCY_BOOT_H
 #define EMERGENCY_BOOT_H
 
+#define EMERGENCY_UART UART0_ADDR
+
 /**
  * @brief Emergency boot function
  * Download the firmware using the serial port (via the kermin protocol)
