@@ -4,7 +4,7 @@
         {
             "label": "make boot (gdb)",
             "type": "shell",
-            "command": "make boot QEMU_ADDITIONAL_FLAGS=\"-gdb tcp::6666 -S\"",
+            "command": "make boot_gdb",
             "isBackground": true
         }
     ]

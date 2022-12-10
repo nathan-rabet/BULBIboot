@@ -12,7 +12,7 @@ AS=$(CROSS_COMPILE)as
 
 BOOTLOADER_ELF=pikaboot.elf
 BOOTLOADER_IMG=pikaboot.img
-BOOTLOADER_BIN=pflash.bin
+PFLASH_BIN=pflash.bin
 
 KERNEL_PATH=$(BUILD)/thirdparty/Image
 INITRD_PATH=$(BUILD)/thirdparty/initramfs.cpio.gz
@@ -24,12 +24,12 @@ BOOTLOADER_SIZE_MB?=$(shell du -m $(BUILD)/$(BOOTLOADER_IMG) | cut -f1)
 KERMIT_FLAGS= -DNODEBUG
 
 CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c 
-CFLAGS += -Iinclude -I./src/modules/kermit
+CFLAGS += -Iinclude -I./modules/kermit/core
 CFLAGS += -DRAM_SIZE_GB=$(RAM_SIZE_GB) -DKERNEL_SIZE_MB=$(KERNEL_SIZE_MB) -DBOOTLOADER_SIZE_MB=$(BOOTLOADER_SIZE_MB)
 CFLAGS += -DNODEBUG
 LDFLAGS:=-nostdlib -T link.ld
 
-SRC_C=$(shell find src -name '*.c')
+SRC_C=$(shell find src -name '*.c') $(shell find src -path '*/modules/kermit/*.c')
 SRC_S=$(shell find src -name '*.S')
 
 OBJS=$(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
@@ -43,31 +43,31 @@ $(BUILD)/$(BOOTLOADER_ELF): $(OBJS)
 $(BUILD)/$(BOOTLOADER_IMG): $(BUILD)/$(BOOTLOADER_ELF)
 	$(CROSS_COMPILE)objcopy -O binary $< $@
 
-$(BUILD)/$(BOOTLOADER_BIN): $(BUILD)/$(BOOTLOADER_ELF) $(KERNEL_PATH)
+$(BUILD)/$(PFLASH_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
 	$(V)dd if=/dev/zero of=$@ bs=1M count=512
 	$(V)dd if=$< of=$@ conv=notrunc bs=1M count=20
 	$(V)dd if=$(KERNEL_PATH) of=$@ conv=notrunc bs=1M seek=50
 
-$(BOOTLOADER_BIN): $(BUILD)/$(BOOTLOADER_BIN)
-
-boot_gdb:
-	$(MAKE) boot QEMU_ADDITIONAL_FLAGS="-gdb tcp::6666 -S"
+$(PFLASH_BIN): $(BUILD)/$(PFLASH_BIN)
 
 .PHONY: boot
-boot: $(BUILD)/$(BOOTLOADER_BIN) $(INITRD_PATH)
+boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
 	qemu-system-aarch64 \
 	-machine virt \
 	-nographic \
 	-cpu cortex-a72 \
-	-kernel $(BUILD)/$(BOOTLOADER_BIN) \
+	-kernel $(BUILD)/$(PFLASH_BIN) \
 	-initrd $(INITRD_PATH) \
-	-serial mon:stdio \
-	-monitor telnet:localhost:4444,server,nowait \
+	-serial pty \
 	-m $(RAM_SIZE_GB)G \
-	-D qemu.log \
-	-d in_asm \
 	-smp 2 \
+	-d in_asm \
+	-D qemu.log \
 	$(QEMU_ADDITIONAL_FLAGS)
+
+.PHONY: boot_gdb
+boot_gdb:
+	$(MAKE) boot QEMU_ADDITIONAL_FLAGS="-gdb tcp::6666 -S"
 
 
 # .PHONY: boot_cheat
@@ -80,10 +80,6 @@ boot: $(BUILD)/$(BOOTLOADER_BIN) $(INITRD_PATH)
 # 	-serial mon:stdio \
 # 	-m $(RAM_SIZE_GB)G \
 # 	-smp 4
-
-PHONY: clean
-clean:
-	$(RM) $(shell find build/src -name '*.o') $(BUILD)/$(BOOTLOADER_ELF) $(BUILD)/$(BOOTLOADER_IMG)
 
 # object files
 $(BUILD)/%.o: %.c
@@ -143,6 +139,33 @@ $(BUILD)/busybox-1.35.0/initramfs.cpio.gz: $(BUILD)/busybox-1.35.0/initramfs/ini
 
 $(INITRD_PATH): $(BUILD)/busybox-1.35.0/initramfs.cpio.gz $(BUILD)/thirdparty
 	cp $< $@
+
+################################################################################
+# E-Kermit binary
+################################################################################
+
+KERMIT_SRC = $(shell find modules/kermit -name '*.c')
+KERMIT_OBJ = $(patsubst %.c, $(BUILD)/%.o, $(KERMIT_SRC))
+
+.PHONY: kermit
+kermit: $(BUILD)/kermit.elf
+
+$(BUILD)/kermit.elf: CFLAGS=-O0 -g -Imodules/kermit/core -DDEVICE=/dev/pts/6
+$(BUILD)/kermit.elf: CC=gcc
+$(BUILD)/kermit.elf: $(KERMIT_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^
+
+################################################################################
+# Clean
+################################################################################
+
+PHONY: clean
+clean:
+	$(RM) $(shell find build/src -name '*.o') \
+	$(shell find build/modules -name '*.o') \
+	$(BUILD)/$(BOOTLOADER_ELF) \
+	$(BUILD)/$(BOOTLOADER_IMG) \
+	$(BUILD)/kermit.elf
 
 ################################################################################
 # Dependences

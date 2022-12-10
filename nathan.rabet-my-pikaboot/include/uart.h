@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "int.h"
 #include "virt.h"
 
 ///
@@ -12,7 +13,7 @@
 /// @source: https://github.com/qemu/qemu/blob/master/hw/arm/virt.c
 ///
 
-#define UART_REGISTER(UART, OFFSET) *(uart_t *)((char *)(UART) + (OFFSET))
+#define UART_REGISTER(UART, OFFSET) (*(uart_t *)((unsigned char *)(UART) + (OFFSET)))
 typedef uint32_t uart_t;
 
 // OFFSETS enum
@@ -49,6 +50,10 @@ enum fr_bits
     FR_TXFE = 1 << 7
 };
 
+// ------------------------------------------------------------
+// PL011 Setup
+// ------------------------------------------------------------
+
 #define BASE_CLOCK 24000000
 
 // Frame format
@@ -64,13 +69,95 @@ enum fr_bits
  */
 void pl011_setup(volatile uart_t *uart_addr);
 
+// ------------------------------------------------------------
+// I/O
+// ------------------------------------------------------------
+
+/**
+ * @brief Write a buffer to the UART
+ *
+ * @param buf The buffer to write
+ * @param size The size of the buffer
+ * @param uart_addr The address of the UART (MMIO)
+ * @return u64 size if success, -1 otherwise
+ */
+u64 uart_write(unsigned char *buf, u64 size, volatile uart_t *uart_addr);
+
+/**
+ * @brief Read a buffer from the UART
+ *
+ * @param buf The buffer to read
+ * @param size The size of the buffer
+ * @param uart_addr The address of the UART (MMIO)
+ * @return u64 size if success, -1 otherwise
+ */
+u64 uart_read(unsigned char *buf, u64 size, volatile uart_t *uart_addr);
+
+// ------------------------------------------------------------
+// Ask UART for status
+// ------------------------------------------------------------
+
+/**
+ * @brief Check if the UART has interrupts enabled
+ *
+ * @param uart_addr The address of the UART (MMIO)
+ * @return bool true if enabled, false otherwise
+ */
+bool check_uart_interrupts_enabled(volatile uart_t *uart_addr);
+
 /**
  * @brief Check if the UART is enabled
  *
  * @param uart_addr The address of the UART (MMIO)
- * @return int 1 if enabled, 0 otherwise
+ * @return bool true if enabled, false otherwise
  */
 bool check_uart_enabled(volatile uart_t *uart_addr);
+
+/**
+ * @brief Check if the UART is ready to read
+ *
+ * @param uart_addr The address of the UART (MMIO)
+ * @return bool true if ready, false otherwise
+ */
+bool check_uart_read_ready(volatile uart_t *uart_addr);
+
+/**
+ * @brief Check if the UART is ready to write
+ *
+ * @param uart_addr The address of the UART (MMIO)
+ * @return bool true if ready, false otherwise
+ */
+bool check_uart_write_ready(volatile uart_t *uart_addr);
+
+/**
+ * @brief Check if the UART is busy
+ *
+ * @param uart_addr The address of the UART (MMIO)
+ * @return bool true if busy, false otherwise
+ */
+bool check_transmission_busy(volatile uart_t *uart_addr);
+
+// ------------------------------------------------------------
+// Interrupts
+// ------------------------------------------------------------
+
+/**
+ * @brief Disable interrupts on the UART
+ *
+ * @param uart_addr The address of the UART (MMIO)
+ */
+void uart_disable_interrupts(volatile uart_t *uart_addr);
+
+/**
+ * @brief Enable interrupts on the UART
+ *
+ * @param uart_addr The address of the UART (MMIO)
+ */
+void uart_enable_interrupts(volatile uart_t *uart_addr);
+
+// ------------------------------------------------------------
+// Friendly functions
+// ------------------------------------------------------------
 
 /**
  * @brief Write a character to the UART0
@@ -92,12 +179,5 @@ char kgetc();
  * @param s The string to write
  */
 void kputs(const char *s);
-
-/**
- * @brief Read a character from the UART1
- *
- * @return char The character read
- */
-char read_kermit();
 
 #endif /* UART_H */

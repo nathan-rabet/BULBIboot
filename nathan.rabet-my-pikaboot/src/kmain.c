@@ -1,6 +1,7 @@
 #include "asm.h"
 #include "emergency_boot.h"
 #include "int.h"
+#include "kassert.h"
 #include "kstring.h"
 #include "memdump.h"
 #include "memtest.h"
@@ -11,7 +12,7 @@
 #define BUF_SIZE 1024
 
 #define CRLF "\r\n"
-#define PIKABOOT_CONSOLE() kputs(CRLF "pikaboot 3> ")
+#define PIKABOOT_CONSOLE() kputs(CRLF "PIKABROUT $ ")
 
 void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
 {
@@ -29,7 +30,7 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
     pl011_setup((volatile uart_t *)UART0_ADDR);
 
     PIKABOOT_CONSOLE();
-    while (1)
+    while (true)
     {
         char c = kgetc();
 
