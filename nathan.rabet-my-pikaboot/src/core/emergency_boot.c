@@ -9,7 +9,7 @@
 #include "number.h"
 #include "uart.h"
 
-#define PACKET_MAX_SIZE 1024
+#define PACKET_MAX_SIZE 2048
 
 const unsigned char soh = SOH;
 
@@ -98,11 +98,6 @@ static void receive_file(volatile uart_t *emergency_uart, u64 file_size)
 
         transfered_file_size += file_packet.size;
     }
-
-    // ------------------------------------------------------------------------
-    // PRINT FILE
-    // ------------------------------------------------------------------------
-    uart_write(transfered_file, transfered_file_size, emergency_uart);
 }
 
 void emergency_boot(void)

@@ -6,7 +6,7 @@ import serial
 import struct
 import zlib
 
-PACKET_SIZE = 1024
+PACKET_MAX_SIZE:int = (2048)
 
 EOT = 4
 ENQ = 5
@@ -36,7 +36,7 @@ class EmergencyPacket:
         return packet
 
 def send_packet(device:serial.Serial, data:bytes, ctrl_c:int = 0) -> None:
-    assert(len(data) <= PACKET_SIZE)
+    assert(len(data) <= PACKET_MAX_SIZE)
     
     packet = EmergencyPacket(ctrl_c, len(data), zlib.crc32(data), data)
     device.write(packet.to_bytes())
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         exit(1)
 
     # Get the arguments
-    device:serial.Serial = serial.Serial(args[1], 115200)
+    device:serial.Serial = serial.Serial(args[1], 115200) # 115200 = UART PL011 baudrate
     file = open(args[2], 'rb')
 
     # Get file total size
@@ -92,19 +92,28 @@ if __name__ == "__main__":
     ################################################################################
     # FILE SENDING LOOP
     ################################################################################
-    print("Sending file")
-    exit = False
-    while not exit:
+    print("Sending file...")
+    total_sent = 0
+    packets_sent = 0
+    while True:
 
         # Read PACKET_SIZE bytes from the file
-        data = file.read(PACKET_SIZE)
+        data = file.read(PACKET_MAX_SIZE)
+        print("\rProgress: {}/{} ({:.2f}%) (packet {}/{})"
+            .format(total_sent, file_size, total_sent / file_size * 100, packets_sent, file_size // PACKET_MAX_SIZE), end="")
 
         # If the data is empty, send EOT
         if len(data) == 0:
             send_packet(device, b"", EOT) # 4 = EOT
-            exit = True
+            print("\n\nFile sent! ({} bytes)".format(total_sent))
+            file.close()
+            device.close()
+            exit(0)
         # If the data is not empty, send the data
         else:
             safe_send_packet(device, data)
+            packets_sent += 1
+            print("Packet sent! ({} packets)\n".format(packets_sent))
+            total_sent += len(data)
+            # Print the progress and delete the previous line
 
-    file.close()
