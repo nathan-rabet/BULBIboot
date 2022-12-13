@@ -5,8 +5,9 @@ import os
 import serial
 import struct
 import zlib
+import time
 
-PACKET_MAX_SIZE:int = (2048)
+PACKET_MAX_SIZE:int = 2048
 
 EOT = 4
 ENQ = 5
@@ -95,8 +96,10 @@ if __name__ == "__main__":
     print("Sending file...")
     total_sent = 0
     packets_sent = 0
+    
+    # Set a timer
+    start_time = time.time()
     while True:
-
         # Read PACKET_SIZE bytes from the file
         data = file.read(PACKET_MAX_SIZE)
         print("\rProgress: {}/{} ({:.2f}%) (packet {}/{})"
@@ -106,14 +109,22 @@ if __name__ == "__main__":
         if len(data) == 0:
             send_packet(device, b"", EOT) # 4 = EOT
             print("\n\nFile sent! ({} bytes)".format(total_sent))
+
+            # Print the time elapsed (XmYs)
+            elapsed_time = time.time() - start_time
+            print("Time elapsed: {}m{}s".format(int(elapsed_time // 60), int(elapsed_time % 60)))
             file.close()
-            device.close()
+            
+            # Read 1 byte from the device and print it (while true)
+            while True:
+                print(device.read(1).decode('utf-8'), end="")
+                sys.stdout.flush()
+                
+
             exit(0)
         # If the data is not empty, send the data
         else:
             safe_send_packet(device, data)
             packets_sent += 1
-            print("Packet sent! ({} packets)\n".format(packets_sent))
             total_sent += len(data)
-            # Print the progress and delete the previous line
 

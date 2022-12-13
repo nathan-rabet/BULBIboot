@@ -47,6 +47,11 @@ void pl011_setup(volatile uart_t *uart_addr)
     // Enable all interrupts by setting corresponding bits to 1
     uart_enable_interrupts(uart_addr);
 
+    // Set Line Control Register
+    UART_REGISTER(uart_addr, LCR_OFFSET) = ((DATA_FRAME_WIDTH - 1) & 0x3)
+        | (HAS_PARITY << 1) | (HAS_STOP_BITS << 2) | (HAS_TWO_STOP_BITS << 3)
+        | (LCR_FEN);
+
     // Disable DMA by setting all bits to 0
     UART_REGISTER(uart_addr, DMACR_OFFSET) = 0;
 
@@ -177,6 +182,7 @@ char kgetc()
 
 void kputs(const char *s)
 {
-    if (uart_write((unsigned char *)s, strlen(s), (uart_t *)UART0_ADDR) == (u64)-1)
+    if (uart_write((unsigned char *)s, strlen(s), (uart_t *)UART0_ADDR)
+        == (u64)-1)
         return; // panic("UART0 is not working");
 }

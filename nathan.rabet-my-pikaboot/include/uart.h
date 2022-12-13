@@ -59,7 +59,8 @@ enum fr_bits
 // Frame format
 #define DATA_FRAME_WIDTH 8
 #define HAS_PARITY 0
-#define STOP_BITS 1
+#define HAS_STOP_BITS 1
+#define HAS_TWO_STOP_BITS 0
 #define BAUDRATE 115200
 
 /**

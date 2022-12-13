@@ -1,0 +1,43 @@
+#ifndef LINUX_BOOT_H
+#define LINUX_BOOT_H
+
+#include "int.h"
+
+/**
+ * @brief Boot a linux kernel
+ *
+ * @note The kernel address and the device tree blob address must be set before
+ * using the functions linux_set_kernel_addr() and linux_set_dtb().
+ * If they are not set, the function will panic.
+ */
+void linux_boot();
+
+/**
+ * @brief Get the device tree blob address
+ *
+ * @return void* The address of the device tree blob
+ */
+const void *linux_get_dtb_addr(void);
+
+/**
+ * @brief Get the kernel address
+ *
+ * @return void* The address of the kernel
+ */
+void *linux_get_kernel_addr(void);
+
+/**
+ * @brief Set the kernel address
+ *
+ * @param kernel_addr The address of the kernel
+ */
+void linux_set_kernel_addr(void *kernel_addr);
+
+/**
+ * @brief Set the device tree blob address
+ *
+ * @param dtb The address of the device tree blob
+ */
+void linux_set_dtb_addr(void *dtb);
+
+#endif /* LINUX_BOOT_H */

@@ -1,13 +1,13 @@
 
-.global linux_boot
+.global _linux_boot
 
-linux_boot:
+_linux_boot:
 
     //
     // FUNCTION CALL PARAMETERS
     // ------------------------
     // x0 = dtb
-    // x1 = QEMU kmain offset
+    // x1 = kernel entry point
     // ------------------------
 
     //
@@ -22,8 +22,6 @@ linux_boot:
 
     // x4 = x1 + 50 MiB
     mov x4, x1
-    mov x5, 0x3200000
-    add x4, x4, x5
 
     // Set x1, x2, x3 to 0;
     mov x1, xzr

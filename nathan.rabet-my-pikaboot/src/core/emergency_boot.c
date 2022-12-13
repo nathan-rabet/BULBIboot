@@ -6,6 +6,7 @@
 #include "int.h"
 #include "kassert.h"
 #include "kstring.h"
+#include "linux_boot.h"
 #include "number.h"
 #include "uart.h"
 
@@ -77,7 +78,8 @@ static u64 initiate_file_transfer(volatile uart_t *emergency_uart)
 
 static void receive_file(volatile uart_t *emergency_uart, u64 file_size)
 {
-    unsigned char transfered_file[file_size];
+    // unsigned char transfered_file[file_size];
+    unsigned char *transfered_file = linux_get_kernel_addr();
     u64 transfered_file_size = 0;
 
     // -------------------------------------------------------------------------
@@ -98,6 +100,20 @@ static void receive_file(volatile uart_t *emergency_uart, u64 file_size)
 
         transfered_file_size += file_packet.size;
     }
+
+    // -------------------------------------------------------------------------
+    // PRINT FILE CRC
+    // -------------------------------------------------------------------------
+    u32 crc = crc32(transfered_file, transfered_file_size);
+
+    uart_write((unsigned char *)"CRC: ", 5, emergency_uart);
+    uart_write((unsigned char *)itoa64hex(crc), 10, emergency_uart);
+    uart_write((unsigned char *)CRLF, sizeof(CRLF), emergency_uart);
+
+    // -------------------------------------------------------------------------
+    // BOOT LINUX KERNEL
+    // -------------------------------------------------------------------------
+    linux_boot();
 }
 
 void emergency_boot(void)
@@ -113,14 +129,6 @@ void emergency_boot(void)
     u64 file_size = initiate_file_transfer(emergency_uart);
     if (file_size != (u64)-1)
         receive_file(emergency_uart, file_size);
-
-    // Re-enable interrupts
-    uart_enable_interrupts(emergency_uart);
-
-    // Flush the UART
-    unsigned char c = 0;
-    while (uart_read(&c, 1, emergency_uart) != 0)
-        ;
 
     // Re-setup UART
     pl011_setup(emergency_uart);

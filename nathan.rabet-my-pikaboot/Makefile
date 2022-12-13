@@ -18,7 +18,6 @@ KERNEL_PATH=$(BUILD)/thirdparty/Image
 INITRD_PATH=$(BUILD)/thirdparty/initramfs.cpio.gz
 
 RAM_SIZE_GB?=2
-KERNEL_SIZE_MB?=$(shell du -m $(KERNEL_PATH) | cut -f1)
 BOOTLOADER_SIZE_MB?=$(shell du -m $(BUILD)/$(BOOTLOADER_IMG) | cut -f1)
 
 KERMIT_FLAGS= -DNODEBUG
@@ -29,7 +28,7 @@ CFLAGS += -DRAM_SIZE_GB=$(RAM_SIZE_GB) -DKERNEL_SIZE_MB=$(KERNEL_SIZE_MB) -DBOOT
 CFLAGS += -DNODEBUG
 LDFLAGS:=-nostdlib -T link.ld
 
-SRC_C=$(shell find src -name '*.c') $(shell find src -path '*/modules/kermit/*.c')
+SRC_C=$(shell find src -name '*.c')
 SRC_S=$(shell find src -name '*.S')
 
 OBJS=$(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
@@ -48,6 +47,7 @@ $(BUILD)/$(PFLASH_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
 	$(V)dd if=$< of=$@ conv=notrunc bs=1M count=20
 	$(V)dd if=$(KERNEL_PATH) of=$@ conv=notrunc bs=1M seek=50
 
+
 $(PFLASH_BIN): $(BUILD)/$(PFLASH_BIN)
 
 .PHONY: boot
@@ -60,7 +60,7 @@ boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
 	-initrd $(INITRD_PATH) \
 	-serial pty \
 	-m $(RAM_SIZE_GB)G \
-	-smp 2 \
+	-smp 1 \
 	-d in_asm \
 	-D qemu.log \
 	$(QEMU_ADDITIONAL_FLAGS)
@@ -141,31 +141,15 @@ $(INITRD_PATH): $(BUILD)/busybox-1.35.0/initramfs.cpio.gz $(BUILD)/thirdparty
 	cp $< $@
 
 ################################################################################
-# E-Kermit binary
-################################################################################
-
-KERMIT_SRC = $(shell find modules/kermit -name '*.c')
-KERMIT_OBJ = $(patsubst %.c, $(BUILD)/%.o, $(KERMIT_SRC))
-
-.PHONY: kermit
-kermit: $(BUILD)/kermit.elf
-
-$(BUILD)/kermit.elf: CFLAGS=-O0 -g -Imodules/kermit/core -DDEVICE=/dev/pts/6
-$(BUILD)/kermit.elf: CC=gcc
-$(BUILD)/kermit.elf: $(KERMIT_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
-
-################################################################################
 # Clean
 ################################################################################
 
 PHONY: clean
 clean:
-	$(RM) $(shell find build/src -name '*.o') \
-	$(shell find build/modules -name '*.o') \
+	$(RM) $(shell find $(BUILD)/src -name '*.o') \
+	$(shell find $(BUILD)/modules -name '*.o') \
 	$(BUILD)/$(BOOTLOADER_ELF) \
 	$(BUILD)/$(BOOTLOADER_IMG) \
-	$(BUILD)/kermit.elf
 
 ################################################################################
 # Dependences

@@ -27,7 +27,9 @@
         "number.h": "c",
         "param.h": "c",
         "crc32.h": "c",
-        "ascii.h": "c"
+        "ascii.h": "c",
+        "stddef.h": "c",
+        "linux_boot.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

@@ -2,7 +2,7 @@
 #define KASSERT_H
 
 /**
- * @brief Asserts that a condition is true. Else, it will crash the system.
+ * @brief Asserts that a condition is true. Else, it will panic the system.
  *
  * @param condition The condition to assert.
  */

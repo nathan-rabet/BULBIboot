@@ -3,6 +3,7 @@
 #include "int.h"
 #include "kassert.h"
 #include "kstring.h"
+#include "linux_boot.h"
 #include "memdump.h"
 #include "memtest.h"
 #include "number.h"
@@ -16,11 +17,11 @@
 
 void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
 {
-    u64 dtb = x0;
-    u64 kmain_addr = x4;
+    linux_set_dtb_addr((void *)x0);
     (void)x1;
     (void)x2;
     (void)x3;
+    linux_set_kernel_addr((char *)x4 + 0x3200000);
 
     // Console input buffer
     char buf[BUF_SIZE] = { 0 };
@@ -77,8 +78,7 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
             else if (strcmp("boot", buf) == 0)
             {
                 kputs(CRLF "Booting Linux..." CRLF);
-                extern void linux_boot(u64, u64);
-                linux_boot(dtb, kmain_addr);
+                linux_boot();
             }
 
             else if (strncmp("memtest", buf, 7) == 0)

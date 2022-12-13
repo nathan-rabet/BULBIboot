@@ -4,13 +4,12 @@
 #include "kstring.h"
 #include "uart.h"
 
+#define STRINGIFY(x) #x
+
 void kassert(int condition)
 {
     if (!condition)
-    {
-        kputs("Assertion failed!");
-        ASM("hlt #0");
-    }
+        panic("Assertion failed: " STRINGIFY(condition));
 }
 
 void panic(const char *msg)
