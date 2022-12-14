@@ -30,7 +30,9 @@
         "ascii.h": "c",
         "stddef.h": "c",
         "linux_boot.h": "c",
-        "int.h": "c"
+        "int.h": "c",
+        "malloc.h": "c",
+        "kmalloc.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

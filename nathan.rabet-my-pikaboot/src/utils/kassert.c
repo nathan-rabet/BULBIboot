@@ -14,7 +14,7 @@ void kassert(int condition)
 
 void panic(const char *msg)
 {
-    kputs(CRLF "HeeHooHeeHoo !!");
+    kputs(CRLF "HeeHooHeeHoo !!" CRLF);
 
     kputs("██████   █████  ███    ██ ██  ██████ " CRLF);
     kputs("██   ██ ██   ██ ████   ██ ██ ██      " CRLF);
