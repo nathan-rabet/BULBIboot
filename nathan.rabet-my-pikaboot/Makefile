@@ -22,7 +22,7 @@ BOOTLOADER_SIZE_MB?=$(shell du -m $(BUILD)/$(BOOTLOADER_IMG) | cut -f1)
 
 KERMIT_FLAGS= -DNODEBUG
 
-CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c 
+CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O3 -g -c
 CFLAGS += -Iinclude -I./modules/kermit/core
 CFLAGS += -DRAM_SIZE_GB=$(RAM_SIZE_GB) -DKERNEL_SIZE_MB=$(KERNEL_SIZE_MB) -DBOOTLOADER_SIZE_MB=$(BOOTLOADER_SIZE_MB)
 CFLAGS += -DNODEBUG
@@ -34,7 +34,7 @@ SRC_S=$(shell find src -name '*.S')
 OBJS=$(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
 
 all: boot
-
+	
 
 $(BUILD)/$(BOOTLOADER_ELF): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^

@@ -12,6 +12,7 @@
             "showDevDebugOutput": false,
             "gdbpath": "/usr/bin/gdb-multiarch",
             "valuesFormatting": "prettyPrinters",
+            
             // "preLaunchTask": "make boot (gdb)"
         },
         {

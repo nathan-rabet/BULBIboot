@@ -13,7 +13,9 @@
 /// @source: https://github.com/qemu/qemu/blob/master/hw/arm/virt.c
 ///
 
-#define UART_REGISTER(UART, OFFSET) (*(uart_t *)((unsigned char *)(UART) + (OFFSET)))
+// DO NOT OPTIMIZE THIS
+#define UART_REGISTER(UART, OFFSET)                                            \
+    (*(volatile uart_t *)((volatile unsigned char *)(UART) + (OFFSET)))
 typedef uint32_t uart_t;
 
 // OFFSETS enum

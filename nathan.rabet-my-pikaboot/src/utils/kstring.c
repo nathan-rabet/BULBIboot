@@ -1,5 +1,8 @@
 #include "kstring.h"
 
+// Do not optimize this function
+#pragma GCC push_options
+#pragma GCC optimize("O0")
 void *memset(void *s, int c, size_t n)
 {
     unsigned char *p = s;
@@ -7,6 +10,7 @@ void *memset(void *s, int c, size_t n)
         *p++ = c;
     return s;
 }
+#pragma GCC pop_options
 
 int strcmp(const char *first, const char *second)
 {
@@ -28,6 +32,8 @@ int strncmp(const char *first, const char *second, size_t n)
     return *first - *second;
 }
 
+#pragma GCC push_options
+#pragma GCC optimize("O0")
 void *memcpy(void *dest, const void *src, size_t n)
 {
     unsigned char *d = dest;
@@ -36,6 +42,7 @@ void *memcpy(void *dest, const void *src, size_t n)
         *d++ = *s++;
     return dest;
 }
+#pragma GCC pop_options
 
 char *strtok(char *str, const char *delim)
 {

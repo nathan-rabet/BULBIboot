@@ -29,7 +29,8 @@
         "crc32.h": "c",
         "ascii.h": "c",
         "stddef.h": "c",
-        "linux_boot.h": "c"
+        "linux_boot.h": "c",
+        "int.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

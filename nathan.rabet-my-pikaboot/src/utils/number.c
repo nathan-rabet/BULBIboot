@@ -141,6 +141,9 @@ u64 numtoi64(char *s)
     return atoi64(s);
 }
 
+// Do not optimize this function
+#pragma GCC push_options
+#pragma GCC optimize("O0")
 char *aligned_numtoi64(char *s, u8 nb_digit)
 {
     static char buf[BUF_SIZE] = { 0 };
@@ -170,3 +173,4 @@ char *aligned_numtoi64(char *s, u8 nb_digit)
 
     return buf;
 }
+#pragma GCC pop_options

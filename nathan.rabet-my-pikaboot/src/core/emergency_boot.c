@@ -44,12 +44,11 @@ static struct emergency_packet receive_packet(volatile uart_t *emergency_uart)
         size += uart_read((unsigned char *)&packet + size,
                           sizeof(u8) + sizeof(u64) + sizeof(u32) - size,
                           emergency_uart);
-    u64 packet_data_size = packet.size;
 
     // Get the data of the packet
     size = 0;
-    while (size < packet_data_size)
-        size += uart_read((unsigned char *)packet.data + size, packet_data_size,
+    while (size < packet.size)
+        size += uart_read((unsigned char *)packet.data + size, packet.size,
                           emergency_uart);
 
     // Ask for the packet again if the CRC is incorrect
@@ -79,7 +78,7 @@ static u64 initiate_file_transfer(volatile uart_t *emergency_uart)
 static void receive_file(volatile uart_t *emergency_uart, u64 file_size)
 {
     // unsigned char transfered_file[file_size];
-    unsigned char *transfered_file = linux_get_kernel_addr();
+    volatile unsigned char *transfered_file = linux_get_kernel_addr();
     u64 transfered_file_size = 0;
 
     // -------------------------------------------------------------------------
@@ -95,8 +94,8 @@ static void receive_file(volatile uart_t *emergency_uart, u64 file_size)
             break;
 
         // Copy the file packet data into the transfered file
-        memcpy(transfered_file + transfered_file_size, file_packet.data,
-               file_packet.size);
+        memcpy((unsigned char *)transfered_file + transfered_file_size,
+               file_packet.data, file_packet.size);
 
         transfered_file_size += file_packet.size;
     }
@@ -104,7 +103,7 @@ static void receive_file(volatile uart_t *emergency_uart, u64 file_size)
     // -------------------------------------------------------------------------
     // PRINT FILE CRC
     // -------------------------------------------------------------------------
-    u32 crc = crc32(transfered_file, transfered_file_size);
+    u32 crc = crc32((unsigned char *)transfered_file, transfered_file_size);
 
     uart_write((unsigned char *)"CRC: ", 5, emergency_uart);
     uart_write((unsigned char *)itoa64hex(crc), 10, emergency_uart);
