@@ -1,4 +1,5 @@
 #include "asm.h"
+#include "board.h"
 #include "emergency_boot.h"
 #include "int.h"
 #include "kassert.h"
@@ -8,7 +9,6 @@
 #include "memtest.h"
 #include "number.h"
 #include "uart.h"
-#include "virt.h"
 
 #define BUF_SIZE 1024
 
@@ -28,7 +28,7 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
     u32 buf_i = 0;
 
     // Setup UART0
-    pl011_setup((volatile uart_t *)UART0_ADDR);
+    pl011_setup((volatile uart_t *)UART0_BOARD_ADDR);
 
     PIKABOOT_CONSOLE();
     while (true)
@@ -90,7 +90,7 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
                 u64 granularity = (u64)strtok_r(NULL, " ", &buf_tok);
 
                 if (!is_number((char *)start_addr) || !start_addr)
-                    start_addr = RAM_START;
+                    start_addr = RAM_START_BOARD;
                 else
                     start_addr = numtoi64((char *)start_addr);
                 if (!is_number((char *)size) || !size)

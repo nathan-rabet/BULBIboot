@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "board.h"
 #include "int.h"
-#include "virt.h"
 
 ///
 /// @source: https://wiki.osdev.org/QEMU_AArch64_Virt_Bare_Bones

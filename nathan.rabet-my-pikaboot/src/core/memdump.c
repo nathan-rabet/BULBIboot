@@ -1,9 +1,9 @@
 #include "memdump.h"
 
+#include "board.h"
 #include "kstring.h"
 #include "number.h"
 #include "uart.h"
-#include "virt.h"
 
 #define MEMDUMP_LINE_SIZE (sizeof(void *) * 2)
 

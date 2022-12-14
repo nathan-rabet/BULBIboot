@@ -22,7 +22,7 @@ BOOTLOADER_SIZE_MB?=$(shell du -m $(BUILD)/$(BOOTLOADER_IMG) | cut -f1)
 
 KERMIT_FLAGS= -DNODEBUG
 
-CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c 
+CFLAGS:=-Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss -O0 -g -c
 CFLAGS += -Iinclude -I./modules/kermit/core
 CFLAGS += -DRAM_SIZE_GB=$(RAM_SIZE_GB) -DKERNEL_SIZE_MB=$(KERNEL_SIZE_MB) -DBOOTLOADER_SIZE_MB=$(BOOTLOADER_SIZE_MB)
 CFLAGS += -DNODEBUG
@@ -50,8 +50,9 @@ $(BUILD)/$(PFLASH_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
 
 $(PFLASH_BIN): $(BUILD)/$(PFLASH_BIN)
 
-.PHONY: boot
-boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
+.PHONY: boot_virt
+boot_virt: BOARD_COMPILE_FLAG=VIRT_BOARD
+boot_virt: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
 	qemu-system-aarch64 \
 	-machine virt \
 	-nographic \
@@ -62,12 +63,44 @@ boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
 	-m $(RAM_SIZE_GB)G \
 	-smp 1 \
 	-d in_asm \
-	-D qemu.log \
+	-D qemu_virt.log \
+	$(QEMU_ADDITIONAL_FLAGS)
+
+boot_vexpress-a15: BOARD_COMPILE_FLAG=VEXPRESS_A15_BOARD
+boot_vexpress-a15: RAM_SIZE_GB=1
+boot_vexpress-a15: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
+	qemu-system-arm \
+	-machine vexpress-a15 \
+	-cpu cortex-a15 \
+	-nographic \
+	-kernel $(BUILD)/$(PFLASH_BIN) \
+	-initrd $(INITRD_PATH) \
+	-serial pty \
+	-m $(RAM_SIZE_GB)G \
+	-smp 1 \
+	-d in_asm \
+	-D qemu_vexpress-a15.log \
+	$(QEMU_ADDITIONAL_FLAGS)
+
+	-pc: RAM_SIZE_GB=1
+boot_orangepi-pc: BOARD_COMPILE_FLAG=ORANGEPI_BOARD
+boot_orangepi-pc: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
+	qemu-system-arm \
+	-machine orangepi-pc \
+	-cpu cortex-a72 \
+	-nographic \
+	-kernel $(BUILD)/$(PFLASH_BIN) \
+	-initrd $(INITRD_PATH) \
+    -append 'console=pts,115200 root=/dev/mmcblk0p2' \
+	-m $(RAM_SIZE_GB)G \
+	-smp 4 \
+	-d in_asm \
+	-D qemu_orangepi-pc.log \
 	$(QEMU_ADDITIONAL_FLAGS)
 
 .PHONY: boot_gdb
 boot_gdb:
-	$(MAKE) boot QEMU_ADDITIONAL_FLAGS="-gdb tcp::6666 -S"
+	$(MAKE) boot_vexpress-a15 QEMU_ADDITIONAL_FLAGS="-gdb tcp::6666 -S"
 
 
 # .PHONY: boot_cheat
@@ -82,10 +115,12 @@ boot_gdb:
 # 	-smp 4
 
 # object files
+$(BUILD)/%.o: CFLAGS += -D$(BOARD_COMPILE_FLAG)
 $(BUILD)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD)/%.o: CFLAGS += -D$(BOARD_COMPILE_FLAG)
 $(BUILD)/%.o: %.S
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -1,9 +1,9 @@
 #include "memtest.h"
 
+#include "board.h"
 #include "kstring.h"
 #include "number.h"
 #include "uart.h"
-#include "virt.h"
 
 #ifndef RAM_SIZE_GB
 #    define RAM_SIZE_GB 2
@@ -155,9 +155,9 @@ void memtest(u64 base_addr, u64 size, u8 granularity)
     }
 
     kputs(CRLF "Testing memory from ");
-    kputs(itoa64hex(RAM_START + base_addr));
+    kputs(itoa64hex(RAM_START_BOARD + base_addr));
     kputs(" to ");
-    kputs(itoa64hex((RAM_START + base_addr) + size));
+    kputs(itoa64hex((RAM_START_BOARD + base_addr) + size));
     kputs(" with granularity ");
     kputs(itoa64(granularity));
     kputs(CRLF);
@@ -166,8 +166,8 @@ void memtest(u64 base_addr, u64 size, u8 granularity)
     reset_memtest_errors();
 
     // Test the memory
-    for (char *addr = (char *)RAM_START + base_addr;
-         (u64)addr < RAM_START + base_addr + size; addr += granularity)
+    for (char *addr = (char *)RAM_START_BOARD + base_addr;
+         (u64)addr < RAM_START_BOARD + base_addr + size; addr += granularity)
     {
         memtest_xor(addr, granularity);
         memtest_byte_per_byte(addr, granularity);
@@ -176,7 +176,7 @@ void memtest(u64 base_addr, u64 size, u8 granularity)
         memtest_shift(addr, granularity);
 
         // On each percent, print ONE dot
-        if (((u64)addr - (RAM_START + base_addr)) % (size / 100) == 0)
+        if (((u64)addr - (RAM_START_BOARD + base_addr)) % (size / 100) == 0)
             kputc('.');
     }
 

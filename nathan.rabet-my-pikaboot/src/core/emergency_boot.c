@@ -118,7 +118,7 @@ static void receive_file(volatile uart_t *emergency_uart, u64 file_size)
 
 void emergency_boot(void)
 {
-    volatile uart_t *emergency_uart = (volatile uart_t *)UART0_ADDR;
+    volatile uart_t *emergency_uart = (volatile uart_t *)UART0_BOARD_ADDR;
 
     // Setup UART (in case of misconfiguration)
     pl011_setup(emergency_uart);

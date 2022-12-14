@@ -4,15 +4,14 @@
             "name": "Linux",
             "includePath": [
                 "${default}",
-                "${workspaceFolder}/include/**",
-                "${workspaceFolder}/src/modules/kermit/**",
-                "${workspaceFolder}/modules/kermit/core"
+                "${workspaceFolder}/include/**"
             ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c17",
-            "cppStandard": "c++14",
-            "intelliSenseMode": "linux-clang-x64",
+            "defines": [
+                "VIRT_BOARD=1"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c99",
+            "intelliSenseMode": "gcc-arm64",
             "configurationProvider": "ms-vscode.makefile-tools"
         }
     ],

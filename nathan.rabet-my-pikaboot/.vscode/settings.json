@@ -29,7 +29,9 @@
         "crc32.h": "c",
         "ascii.h": "c",
         "stddef.h": "c",
-        "linux_boot.h": "c"
+        "linux_boot.h": "c",
+        "orangepi_pc.h": "c",
+        "vexpress_a15.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
