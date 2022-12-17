@@ -1,8 +1,8 @@
 #include "asm.h"
 #include "emergency_boot.h"
 #include "int.h"
+#include "kalloc.h"
 #include "kassert.h"
-#include "kmalloc.h"
 #include "kstring.h"
 #include "linux_boot.h"
 #include "memdump.h"
@@ -18,70 +18,17 @@
 
 void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
 {
-    // Setup UART0
-    pl011_setup((volatile uart_t *)UART0_ADDR);
-
-    alloc_init();
-    // Malloc test
-    char *ptr = malloc(0x1000);
-    kputs("Malloc test");
-    kassert(ptr != NULL);
-    kputs(CRLF);
-
-    // Write to the memory
-    kputs("Writing to the memory");
-    char string[] = "Malloc test";
-    memcpy(ptr, string, sizeof(string));
-    kassert(strcmp(ptr, string) == 0);
-    kputs(CRLF);
-
-    // Allocate a new memory
-    char *ptr2 = malloc(0x1000);
-    kputs("Allocating a new memory");
-    kassert(ptr2 != NULL);
-    kassert(ptr2 != ptr);
-    kputs(CRLF);
-
-    // Write on the new memory
-    kputs("Writing on the new memory");
-    char string2[] = "NEW Malloc test";
-    memcpy(ptr2, string2, sizeof(string2));
-    kassert(strcmp(ptr2, string2) == 0);
-    kputs(CRLF);
-
-    // Verify the first memory
-    kputs("Verifying the first memory");
-    kassert(strcmp(ptr, string) == 0);
-    kputs(CRLF);
-
-    // Free the memory
-    kputs("Freeing the memory");
-    free(ptr);
-    free(ptr2);
-    kputs(CRLF);
-
-    // Reallocate the memory
-    kputs("Reallocating the memory");
-    char *ptr3 = malloc(0x1000);
-    kassert(ptr3 != NULL);
-    kassert(ptr3 == ptr);
-
-    // Write on the reallocated memory
-    kputs("Writing on the reallocated memory");
-    char string3[] = "REALLOC Malloc test";
-    memcpy(ptr3, string3, sizeof(string3));
-    kassert(strcmp(ptr3, string3) == 0);
-    kputs(CRLF);
-
-    // Free the memory
-    kputs("Freeing the memory");
-    free(ptr3);
-
     linux_set_dtb_addr((void *)x0);
     (void)x1;
     (void)x2;
     (void)x3;
     linux_set_kernel_addr((char *)x4 + 0x3200000);
+
+    // Setup UART0
+    pl011_setup((volatile uart_t *)UART0_ADDR);
+
+    // Initialize malloc heap
+    kalloc_init();
 
     // Console input buffer
     char buf[BUF_SIZE] = { 0 };

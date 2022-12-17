@@ -36,9 +36,7 @@
 #if !defined(MBEDTLS_PLATFORM_STD_CALLOC)
 static void *platform_calloc_uninit( size_t n, size_t size )
 {
-    ((void) n);
-    ((void) size);
-    return( NULL );
+    return kcalloc(n, size);
 }
 
 #define MBEDTLS_PLATFORM_STD_CALLOC   platform_calloc_uninit
@@ -47,7 +45,7 @@ static void *platform_calloc_uninit( size_t n, size_t size )
 #if !defined(MBEDTLS_PLATFORM_STD_FREE)
 static void platform_free_uninit( void *ptr )
 {
-    ((void) ptr);
+    return kfree(ptr);
 }
 
 #define MBEDTLS_PLATFORM_STD_FREE     platform_free_uninit
@@ -58,12 +56,12 @@ static void (*mbedtls_free_func)( void * ) = MBEDTLS_PLATFORM_STD_FREE;
 
 void * mbedtls_calloc( size_t nmemb, size_t size )
 {
-    return (*mbedtls_calloc_func)( nmemb, size );
+    return kcalloc(nmemb, size);
 }
 
 void mbedtls_free( void * ptr )
 {
-    (*mbedtls_free_func)( ptr );
+    return kfree(ptr);
 }
 
 int mbedtls_platform_set_calloc_free( void * (*calloc_func)( size_t, size_t ),

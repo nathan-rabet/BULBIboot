@@ -1,18 +1,20 @@
 {
     "configurations": [
         {
-            "name": "Linux",
+            "name": "aarch64",
             "includePath": [
                 "${default}",
+                "${workspaceFolder}/include",
                 "${workspaceFolder}/include/**",
-                "${workspaceFolder}/src/modules/kermit/**",
-                "${workspaceFolder}/modules/kermit/core"
+                "${workspaceFolder}/modules/mbedtls/include",
+                "${workspaceFolder}/modules/mbedtls/library"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c17",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu99",
             "cppStandard": "c++14",
-            "intelliSenseMode": "linux-clang-x64",
+            "compilerArgs": [],
+            "intelliSenseMode": "linux-gcc-arm64",
             "configurationProvider": "ms-vscode.makefile-tools"
         }
     ],

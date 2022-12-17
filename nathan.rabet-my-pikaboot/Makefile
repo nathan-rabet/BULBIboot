@@ -59,6 +59,8 @@ OBJ_WOLFCRYPT = $(SRC_WOLFCRYPT:%.c=$(BUILD)/%.o)
 SRC_CYCLONE = $(shell find modules/cyclone -name '*.c')
 OBJ_CYCLONE = $(SRC_CYCLONE:%.c=$(BUILD)/%.o)
 
+LIB_TOMCRYPT = $(BUILD)/modules/libtomcrypt/lib/libtomcrypt.a
+
 OBJS = $(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
 
 ###########################################################################
@@ -78,7 +80,7 @@ OBJS = $(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
 $(PFLASH_BIN): $(BUILD)/$(PFLASH_BIN)
 	$(info $(PFLASH_BIN) generated successfully)
 	
-$(BUILD)/$(BOOTLOADER_ELF): $(OBJS)
+$(BUILD)/$(BOOTLOADER_ELF): $(OBJS) $(LIB_TOMCRYPT)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(BUILD)/$(BOOTLOADER_IMG): $(BUILD)/$(BOOTLOADER_ELF)
@@ -160,6 +162,15 @@ $(INITRD_PATH): $(BUILD)/busybox-1.35.0/initramfs.cpio.gz $(BUILD)/thirdparty/$(
 	cp $< $@
 
 ################################################################################
+# libtomcrypt
+################################################################################
+libtomcrypt: $(LIB_TOMCRYPT)
+	$(info Libtomcrypt build finished !)
+
+$(LIB_TOMCRYPT): modules/libtomcrypt
+	$(MAKE) -C modules/libtomcrypt install PREFIX=$(shell pwd)/$(BUILD)/modules/libtomcrypt
+
+################################################################################
 # Wolfcrypt
 ################################################################################
 wolfcrypt: CINCLUDE = -Imodules/wolf
@@ -174,7 +185,7 @@ wolfcrypt: $(OBJ_WOLFCRYPT)
 mbedtls: CINCLUDE = -Imodules/mbedtls/include
 mbedtls: COPTIONS =
 mbedtls: 
-	$(MAKE) -C modules/mbedtls lib DESTDIR=$(pwd)/$(BUILD)/modules/mbedtls
+	$(MAKE) -C modules/mbedtls lib DESTDIR=$(shell pwd)/$(BUILD)/modules/mbedtls
 
 ################################################################################
 # Cyclone
@@ -190,9 +201,9 @@ cyclone: $(OBJ_CYCLONE)
 ################################################################################
 PHONY: clean
 clean:
-	$(MAKE) -C modules/mbedtls clean
-	$(RM) $(shell find $(BUILD)/src -name '*.o') \
-	$(shell find $(BUILD)/modules -name '*.o') \
+	$(MAKE) -C modules/libtomcrypt clean PREFIX=$(shell pwd)/$(BUILD)/modules/libtomcrypt
+	$(RM) -r $(BUILD)/modules/ \
+	$(RM) -r $(BUILD)/src/ \
 	$(BUILD)/$(BOOTLOADER_ELF) \
 	$(BUILD)/$(BOOTLOADER_IMG) \
 	$(BUILD)/$(PFLASH_BIN)

@@ -32,7 +32,11 @@
         "linux_boot.h": "c",
         "int.h": "c",
         "malloc.h": "c",
-        "kmalloc.h": "c"
+        "kmalloc.h": "c",
+        "smtp.h": "c",
+        "stdbool.h": "c",
+        "common.h": "c",
+        "cstdarg": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

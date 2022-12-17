@@ -2,8 +2,11 @@
 #define STRING_H
 
 #include <stddef.h>
+#include <time.h>
 
 #define CRLF "\r\n"
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 void *memset(void *s, int c, size_t n);
 
@@ -30,5 +33,12 @@ void *memmove(void *dest, const void *src, size_t n);
 size_t tokenlen(const char *str, const char *delim);
 
 int memcmp(const void *s1, const void *s2, size_t n);
+
+char *strncpy(char *dest, const char *src, size_t n);
+
+void qsort(void *base, size_t nmemb, size_t size,
+           int (*compar)(const void *, const void *));
+
+clock_t clock(void);
 
 #endif /* STRING_H */

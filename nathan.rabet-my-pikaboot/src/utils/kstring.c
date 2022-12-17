@@ -160,3 +160,116 @@ int memcmp(const void *s1, const void *s2, size_t n)
     }
     return 0;
 }
+
+char *strncpy(char *dest, const char *src, size_t n)
+{
+    char *ret = dest;
+    while (n && (*dest++ = *src++))
+        n--;
+    if (n)
+        while (--n)
+            *dest++ = '\0';
+    return ret;
+}
+
+// qsort
+static void swap(unsigned char *a, unsigned char *b, size_t size)
+{
+    char tmp;
+    while (size--)
+    {
+        tmp = *a;
+        *a++ = *b;
+        *b++ = tmp;
+    }
+}
+
+static unsigned char *med3(unsigned char *a, unsigned char *b, unsigned char *c,
+                           int (*cmp)(const void *, const void *))
+{
+    return cmp(a, b) < 0 ? (cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a))
+                         : (cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c));
+}
+
+static void insertion_sort(unsigned char *a, size_t n, size_t size,
+                           int (*cmp)(const void *, const void *))
+{
+    unsigned char *pi, *pj;
+    for (pi = a + size; pi < a + n * size; pi += size)
+        for (pj = pi; pj > a && cmp(pj - size, pj) > 0; pj -= size)
+            swap(pj, pj - size, size);
+}
+
+void qsort(void *base, size_t nmemb, size_t size,
+           int (*compar)(const void *, const void *))
+{
+    unsigned char *a = base;
+    unsigned char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
+    size_t d, r;
+    int cmp_result;
+
+loop:
+    if (nmemb < 7)
+    {
+        insertion_sort(a, nmemb, size, compar);
+        return;
+    }
+    pm = a + (nmemb / 2) * size;
+    if (nmemb > 7)
+    {
+        pl = a;
+        pn = a + (nmemb - 1) * size;
+        if (nmemb > 40)
+        {
+            d = (nmemb / 8) * size;
+            pl = med3(pl, pl + d, pl + 2 * d, compar);
+            pm = med3(pm - d, pm, pm + d, compar);
+            pn = med3(pn - 2 * d, pn - d, pn, compar);
+        }
+        pm = med3(pl, pm, pn, compar);
+    }
+    swap(a, pm, size);
+    pa = pb = a + size;
+
+    pc = pd = a + (nmemb - 1) * size;
+    for (;;)
+    {
+        while (pb <= pc && (cmp_result = compar(pb, a)) <= 0)
+        {
+            if (cmp_result == 0)
+            {
+                swap(pa, pb, size);
+                pa += size;
+            }
+            pb += size;
+        }
+        while (pb <= pc && (cmp_result = compar(pc, a)) >= 0)
+        {
+            if (cmp_result == 0)
+            {
+                swap(pc, pd, size);
+                pd -= size;
+            }
+            pc -= size;
+        }
+        if (pb > pc)
+            break;
+        swap(pb, pc, size);
+        pb += size;
+        pc -= size;
+    }
+
+    pn = a + nmemb * size;
+    r = MIN(pa - a, pb - pa);
+    swap(a, pb - r, r);
+    r = MIN((size_t)(pd - pc), pn - pd - size);
+    swap(pb, pn - r, r);
+    if ((r = pb - pa) > size)
+        qsort(a, r / size, size, compar);
+    if ((r = pd - pc) > size)
+    {
+        a = pn - r;
+        nmemb = r / size;
+        goto loop;
+    }
+}
