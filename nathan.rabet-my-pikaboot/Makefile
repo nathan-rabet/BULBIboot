@@ -108,7 +108,7 @@ boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
 	qemu-system-aarch64 \
 	-machine virt,gic-version=3 \
 	-nographic \
-	-cpu cortex-a72,+fp,+asimd \
+	-cpu cortex-a72 \
 	-kernel $(BUILD)/$(PFLASH_BIN) \
 	-initrd $(INITRD_PATH) \
 	-serial pty \
@@ -185,7 +185,7 @@ $(LIB_TOMMATH): modules/libtommath
 	$(MAKE) -C modules/libtommath install \
 	PREFIX=$(shell pwd)/$(BUILD)/modules/libtommath \
 	IGNORE_SPEED=1 \
-	CFLAGS="-g -DARGTYPE=4 -DMP_NO_DEV_URANDOM -U__linux__ -mgeneral-regs-only"
+	CFLAGS="-g -DARGTYPE=4 -DMP_NO_DEV_URANDOM -U__linux__"
 
 ################################################################################
 # libtomcrypt
@@ -198,7 +198,7 @@ $(LIB_TOMCRYPT): modules/libtomcrypt $(LIB_TOMMATH)
 	$(MAKE) -C modules/libtomcrypt install \
 	PREFIX=$(shell pwd)/$(BUILD)/modules/libtomcrypt \
 	IGNORE_SPEED=1 \
-	CFLAGS="-g -DUSE_LTM -DARGTYPE=4 -I$(shell pwd)/$(LIB_TOMMATH_HEADERS) -mgeneral-regs-only"
+	CFLAGS="-g -DUSE_LTM -DARGTYPE=4 -I$(shell pwd)/$(LIB_TOMMATH_HEADERS)"
 	EXTRALIBS=$(LIB_TOMMATH)
 
 ################################################################################
