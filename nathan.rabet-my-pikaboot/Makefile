@@ -1,4 +1,5 @@
 NCORE?=$(shell nproc)
+MAKE=make -j$(NCORE)
 
 ###################################################################################################
 #       ___           ___                                   ___           ___           ___       #
@@ -36,15 +37,6 @@ INITRD_PATH=$(BUILD)/thirdparty/$(ARCH)/initramfs.cpio.gz
 BUILD=build
 
 ################################################################################
-# Compilation options
-CINCLUDE = -Iinclude
-CDEBUG = -g
-CERROR = -W -Werror -Wall -Wextra -Werror
-CSTD = -std=c99
-COPTIONS = -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss
-COPTIM = -O0
-
-################################################################################
 # Linker options
 LDFLAGS:= -nostdlib -T link.ld
 
@@ -60,8 +52,18 @@ SRC_CYCLONE = $(shell find modules/cyclone -name '*.c')
 OBJ_CYCLONE = $(SRC_CYCLONE:%.c=$(BUILD)/%.o)
 
 LIB_TOMCRYPT = $(BUILD)/modules/libtomcrypt/lib/libtomcrypt.a
+LIB_TOMCRYPT_HEADERS = modules/libtomcrypt/src/headers
 
 OBJS = $(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
+
+################################################################################
+# Compilation options
+CINCLUDE = -Iinclude -I$(LIB_TOMCRYPT_HEADERS)
+CDEBUG = -g
+CERROR = -W -Werror -Wall -Wextra -Werror
+CSTD = -std=c99
+COPTIONS = -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss
+COPTIM = -O0
 
 ###########################################################################
 #       ___           ___                         ___           ___       #
@@ -140,18 +142,18 @@ $(KERNEL_PATH): $(BUILD)/linux-5.19.17/arch/$(ARCH)/boot/Image $(BUILD)/thirdpar
 	cp $< $@
 
 $(BUILD)/busybox-1.35.0/.config: $(BUILD)/busybox-1.35.0
-	cd $(BUILD)/busybox-1.35.0/ && make ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) defconfig
+	cd $(BUILD)/busybox-1.35.0/ && $(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) defconfig
 	cp cfg/busybox_cfg $@
 
 $(BUILD)/busybox-1.35.0/_install: $(BUILD)/busybox-1.35.0/.config
-	cd $(BUILD)/busybox-1.35.0 && make ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) install -j $(NCORE)
+	cd $(BUILD)/busybox-1.35.0 && $(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) install
 
 $(BUILD)/busybox-1.35.0/initramfs: $(BUILD)/busybox-1.35.0/_install
 	mkdir -pv $@
 	cd $@ && for i in bin sbin etc proc sys usr/bin usr/sbin; do mkdir -pv $$i; done && cp -a ../_install/* .
 
 $(BUILD)/busybox-1.35.0/initramfs/init: $(BUILD)/busybox-1.35.0/initramfs
-	cd $(BUILD)/busybox-1.35.0 && make ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) install -j $(NCORE)
+	cd $(BUILD)/busybox-1.35.0 && $(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) install
 	cp cfg/busybox_init $@
 	chmod +x $@
 
@@ -168,7 +170,10 @@ libtomcrypt: $(LIB_TOMCRYPT)
 	$(info Libtomcrypt build finished !)
 
 $(LIB_TOMCRYPT): modules/libtomcrypt
-	$(MAKE) -C modules/libtomcrypt install PREFIX=$(shell pwd)/$(BUILD)/modules/libtomcrypt
+	$(MAKE) -C modules/libtomcrypt install \
+	PREFIX=$(shell pwd)/$(BUILD)/modules/libtomcrypt \
+	IGNORE_SPEED=1 \
+	CFLAGS="-g"
 
 ################################################################################
 # Wolfcrypt

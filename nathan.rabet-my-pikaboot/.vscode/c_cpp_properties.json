@@ -6,8 +6,7 @@
                 "${default}",
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/include/**",
-                "${workspaceFolder}/modules/mbedtls/include",
-                "${workspaceFolder}/modules/mbedtls/library"
+                "${workspaceFolder}/modules/libtomcrypt/src/headers"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

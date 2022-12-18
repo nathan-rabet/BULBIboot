@@ -158,7 +158,7 @@ char *aligned_numtoi64(char *s, u8 nb_digit)
         buf[buf_i++] = 'x';
     }
 
-    u64 len = tokenlen(s, " ");
+    size_t len = tokenlen(s, " ");
 
     // Fill with 0
     if (nb_digit > len)

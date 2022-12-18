@@ -6,16 +6,16 @@
 
 /* macros for various libc functions you can change for embedded targets */
 #ifndef XMALLOC
-#define XMALLOC xmalloc
+#define XMALLOC kmalloc
 #endif
 #ifndef XREALLOC
-#define XREALLOC xrealloc
+#define XREALLOC krealloc
 #endif
 #ifndef XCALLOC
-#define XCALLOC xcalloc
+#define XCALLOC kcalloc
 #endif
 #ifndef XFREE
-#define XFREE xfree
+#define XFREE kfree
 #endif
 
 #ifndef XMEMSET
@@ -144,7 +144,7 @@
 /* #define LTC_CLEAN_STACK */
 
 /* disable all file related functions */
-/* #define LTC_NO_FILE */
+#define LTC_NO_FILE
 
 /* disable all forms of ASM */
 /* #define LTC_NO_ASM */
@@ -732,5 +732,8 @@
 #define LTC_ECC_SECP521R1
 #undef LTC_ECC521
 #endif
+
+// Custom additions
+#define ARGTYPE 3
 
 #endif /* TOMCRYPT_CUSTOM_H_ */

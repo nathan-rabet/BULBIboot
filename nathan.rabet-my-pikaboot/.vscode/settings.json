@@ -36,7 +36,10 @@
         "smtp.h": "c",
         "stdbool.h": "c",
         "common.h": "c",
-        "cstdarg": "c"
+        "cstdarg": "c",
+        "tomcrypt.h": "c",
+        "kalloc.h": "c",
+        "crypto.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

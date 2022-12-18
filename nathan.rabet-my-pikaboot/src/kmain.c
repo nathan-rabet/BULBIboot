@@ -1,4 +1,7 @@
+#include <stddef.h>
+
 #include "asm.h"
+#include "crypto.h"
 #include "emergency_boot.h"
 #include "int.h"
 #include "kalloc.h"
@@ -18,6 +21,20 @@
 
 void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
 {
+    // Initialize malloc heap
+    kalloc_init();
+
+    // Testing sha256
+    unsigned char test[] = "Hello, world!";
+    char *hash = sha512_hex(test, sizeof(test) - 1);
+    kassert(
+        strcmp(
+            hash,
+            "c1527cd893c124773d811911970c8fe6e857d6df5dc9226bd8a160614c0cd963a4"
+            "ddea2b94bb7d36021ef9d865d5cea294a82dd49a0bb269f51f6e7a57f79421")
+        == 0);
+    kputs("SHA256 test passed" CRLF);
+
     linux_set_dtb_addr((void *)x0);
     (void)x1;
     (void)x2;
@@ -26,9 +43,6 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
 
     // Setup UART0
     pl011_setup((volatile uart_t *)UART0_ADDR);
-
-    // Initialize malloc heap
-    kalloc_init();
 
     // Console input buffer
     char buf[BUF_SIZE] = { 0 };

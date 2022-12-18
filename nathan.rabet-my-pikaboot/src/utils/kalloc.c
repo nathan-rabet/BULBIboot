@@ -4,6 +4,7 @@
 
 #include <stdbool.h>
 
+#include "kassert.h"
 #include "kstring.h"
 
 typedef struct
@@ -16,16 +17,19 @@ typedef struct
 #define ALLOC_HEADER_SZ offsetof(alloc_node_t, block)
 
 static alloc_node_t alloc_list;
-;
+bool is_init = false;
 
 void kalloc_init(void)
 {
     memset(&alloc_list, 0, HEAP_SIZE);
     alloc_list.size = HEAP_SIZE;
+    is_init = true;
 }
 
 void *kmalloc(size_t size)
 {
+    kassert(is_init);
+
     if (size == 0)
         return NULL;
 
