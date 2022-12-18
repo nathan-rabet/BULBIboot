@@ -12,3 +12,5 @@ build/*
 *.hex
 *dtb
 *dts
+*.der
+*.pem

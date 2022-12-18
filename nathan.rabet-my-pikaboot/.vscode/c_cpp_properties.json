@@ -6,7 +6,8 @@
                 "${default}",
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/include/**",
-                "${workspaceFolder}/modules/libtomcrypt/src/headers"
+                "${workspaceFolder}/modules/libtomcrypt/src/headers",
+                "${workspaceFolder}/modules/libtommath"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

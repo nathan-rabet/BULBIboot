@@ -2,27 +2,17 @@
 
 #include "kalloc.h"
 
-#include <stdbool.h>
-
 #include "kassert.h"
 #include "kstring.h"
 
-typedef struct
-{
-    bool used;
-    size_t size;
-    char block[];
-} alloc_node_t;
-
 #define ALLOC_HEADER_SZ offsetof(alloc_node_t, block)
 
-static alloc_node_t alloc_list;
 bool is_init = false;
 
 void kalloc_init(void)
 {
-    memset(&alloc_list, 0, HEAP_SIZE);
-    alloc_list.size = HEAP_SIZE;
+    memset(HEAP_START_ADDR, 0, HEAP_SIZE);
+    HEAP_START_ADDR->size = HEAP_SIZE;
     is_init = true;
 }
 
@@ -33,19 +23,26 @@ void *kmalloc(size_t size)
     if (size == 0)
         return NULL;
 
-    for (alloc_node_t *curr = &alloc_list;;
-         curr = (alloc_node_t *)((char *)curr + curr->size))
+    for (alloc_node_t *curr = HEAP_START_ADDR; curr->size != 0;
+         curr = (alloc_node_t *)((char *)curr->block + curr->size))
     {
         if (!curr->used && curr->size >= size)
         {
             // Modifying next adjacent node (if it is free)
-            alloc_node_t *adj_next = (alloc_node_t *)((char *)curr + size);
+            alloc_node_t *adj_next =
+                (alloc_node_t *)((char *)curr->block + size);
+
+            // Modifying next adjacent node (if it is free)
             if (adj_next->used == false)
                 adj_next->size = curr->size - size;
 
             // Modifying current node
             curr->used = true;
             curr->size = size;
+
+#ifdef DEBUG
+            curr->next = (struct alloc_node_t *)adj_next;
+#endif
             return curr->block;
         }
     }

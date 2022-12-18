@@ -38,6 +38,7 @@ BUILD=build
 
 ################################################################################
 # Linker options
+
 LDFLAGS:= -nostdlib -T link.ld
 
 ################################################################################
@@ -45,25 +46,34 @@ LDFLAGS:= -nostdlib -T link.ld
 SRC_C = $(shell find src -name '*.c')
 SRC_S = $(shell find src -name '*.S')
 
-SRC_WOLFCRYPT = $(shell find modules/wolf/wolfcrypt/src -name '*.c')
-OBJ_WOLFCRYPT = $(SRC_WOLFCRYPT:%.c=$(BUILD)/%.o)
+OBJS = $(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
 
-SRC_CYCLONE = $(shell find modules/cyclone -name '*.c')
-OBJ_CYCLONE = $(SRC_CYCLONE:%.c=$(BUILD)/%.o)
+################################################################################
+# Libraries
 
 LIB_TOMCRYPT = $(BUILD)/modules/libtomcrypt/lib/libtomcrypt.a
 LIB_TOMCRYPT_HEADERS = modules/libtomcrypt/src/headers
 
-OBJS = $(SRC_C:%.c=$(BUILD)/%.o) $(SRC_S:%.S=$(BUILD)/%.o)
+LIB_TOMMATH = $(BUILD)/modules/libtommath/lib/libtommath.a
+LIB_TOMMATH_HEADERS = modules/libtommath
+
+# Needed for __udivti3 in libtommath
+LIB_GCC=$(shell locate libgcc.a | grep "aarch64" | grep "linux-gnu" | head -n 1)
 
 ################################################################################
-# Compilation options
+# Compilator options
 CINCLUDE = -Iinclude -I$(LIB_TOMCRYPT_HEADERS)
 CDEBUG = -g
 CERROR = -W -Werror -Wall -Wextra -Werror
 CSTD = -std=c99
 COPTIONS = -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss
 COPTIM = -O0
+
+# Assembler options
+ASDEBUG = -g
+ASOPTIM = -O0
+ASCPU ?= cortex-a72
+ASMACHINE = -march=armv8-a -mcpu=$(ASCPU)
 
 ###########################################################################
 #       ___           ___                         ___           ___       #
@@ -82,13 +92,13 @@ COPTIM = -O0
 $(PFLASH_BIN): $(BUILD)/$(PFLASH_BIN)
 	$(info $(PFLASH_BIN) generated successfully)
 	
-$(BUILD)/$(BOOTLOADER_ELF): $(OBJS) $(LIB_TOMCRYPT)
+$(BUILD)/$(BOOTLOADER_ELF): $(OBJS) $(LIB_TOMCRYPT) $(LIB_TOMMATH) $(LIB_GCC)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(BUILD)/$(BOOTLOADER_IMG): $(BUILD)/$(BOOTLOADER_ELF)
 	$(CROSS_COMPILE)objcopy -O binary $< $@
 
-$(BUILD)/$(PFLASH_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
+$(BUILD)/$(PFLASH_BIN): $(BUILD)/$(BOOTLOADER_ELF) $(KERNEL_PATH)
 	$(V)dd if=/dev/zero of=$@ bs=1M count=512
 	$(V)dd if=$< of=$@ conv=notrunc bs=1M count=20
 	$(V)dd if=$(KERNEL_PATH) of=$@ conv=notrunc bs=1M seek=50
@@ -96,9 +106,9 @@ $(BUILD)/$(PFLASH_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
 .PHONY: boot
 boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
 	qemu-system-aarch64 \
-	-machine virt \
+	-machine virt,gic-version=3 \
 	-nographic \
-	-cpu cortex-a72 \
+	-cpu cortex-a72,+fp,+asimd \
 	-kernel $(BUILD)/$(PFLASH_BIN) \
 	-initrd $(INITRD_PATH) \
 	-serial pty \
@@ -109,8 +119,9 @@ boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
 	$(QEMU_ADDITIONAL_FLAGS)
 
 .PHONY: boot_gdb
-boot_gdb:
-	$(MAKE) boot QEMU_ADDITIONAL_FLAGS="-gdb tcp::6666 -S"
+boot_gdb: COPTIONS += -DDEBUG
+boot_gdb: QEMU_ADDITIONAL_FLAGS=-gdb tcp::6666 -S
+boot_gdb: boot
 
 ################################################################################
 # Thirdparties
@@ -164,54 +175,51 @@ $(INITRD_PATH): $(BUILD)/busybox-1.35.0/initramfs.cpio.gz $(BUILD)/thirdparty/$(
 	cp $< $@
 
 ################################################################################
+# libtommath
+################################################################################
+.PHONY: libtommath
+libtommath: $(LIB_TOMMATH)
+	$(info Libtommath build finished !)
+
+$(LIB_TOMMATH): modules/libtommath
+	$(MAKE) -C modules/libtommath install \
+	PREFIX=$(shell pwd)/$(BUILD)/modules/libtommath \
+	IGNORE_SPEED=1 \
+	CFLAGS="-g -DARGTYPE=4 -DMP_NO_DEV_URANDOM -U__linux__ -mgeneral-regs-only"
+
+################################################################################
 # libtomcrypt
 ################################################################################
+.PHONY: libtomcrypt
 libtomcrypt: $(LIB_TOMCRYPT)
 	$(info Libtomcrypt build finished !)
 
-$(LIB_TOMCRYPT): modules/libtomcrypt
+$(LIB_TOMCRYPT): modules/libtomcrypt $(LIB_TOMMATH)
 	$(MAKE) -C modules/libtomcrypt install \
 	PREFIX=$(shell pwd)/$(BUILD)/modules/libtomcrypt \
 	IGNORE_SPEED=1 \
-	CFLAGS="-g"
-
-################################################################################
-# Wolfcrypt
-################################################################################
-wolfcrypt: CINCLUDE = -Imodules/wolf
-wolfcrypt: COPTIONS = 
-wolfcrypt: CERROR =
-wolfcrypt: $(OBJ_WOLFCRYPT)
-	$(info Wolfcrypt build finished !)
-
-################################################################################
-# Mbedtls
-################################################################################
-mbedtls: CINCLUDE = -Imodules/mbedtls/include
-mbedtls: COPTIONS =
-mbedtls: 
-	$(MAKE) -C modules/mbedtls lib DESTDIR=$(shell pwd)/$(BUILD)/modules/mbedtls
-
-################################################################################
-# Cyclone
-################################################################################
-cyclone: CINCLUDE = -Imodules/cyclone -Imodules/cyclone/cyclone_crypto -Imodules/cyclone/common -Imodules/cyclone/config
-cyclone: COPTIONS = -DGPL_LICENSE_TERMS_ACCEPTED -U__linux__
-cyclone: CERROR =
-cyclone: $(OBJ_CYCLONE)
-	$(info Cyclone build finished !)
+	CFLAGS="-g -DUSE_LTM -DARGTYPE=4 -I$(shell pwd)/$(LIB_TOMMATH_HEADERS) -mgeneral-regs-only"
+	EXTRALIBS=$(LIB_TOMMATH)
 
 ################################################################################
 # Clean
 ################################################################################
-PHONY: clean
+.PHONY: clean
 clean:
-	$(MAKE) -C modules/libtomcrypt clean PREFIX=$(shell pwd)/$(BUILD)/modules/libtomcrypt
-	$(RM) -r $(BUILD)/modules/ \
 	$(RM) -r $(BUILD)/src/ \
 	$(BUILD)/$(BOOTLOADER_ELF) \
 	$(BUILD)/$(BOOTLOADER_IMG) \
 	$(BUILD)/$(PFLASH_BIN)
+
+.PHONY: libclean
+libclean:
+	$(MAKE) -C modules/libtomcrypt clean PREFIX=$(shell pwd)/$(BUILD)/modules/libtomcrypt
+	$(MAKE) -C modules/libtommath clean PREFIX=$(shell pwd)/$(BUILD)/modules/libtommath
+	$(RM) -r $(BUILD)/modules/
+
+.PHONY: allclean
+allclean: clean libclean
+	$(info All clean finished !)
 ################################################################################
 # Objects files
 ################################################################################

@@ -159,7 +159,7 @@
 #ifndef LTC_NO_MATH
 
 /* LibTomMath */
-/* #define LTM_DESC */
+#define LTM_DESC
 
 /* TomsFastMath */
 /* #define TFM_DESC */
@@ -732,8 +732,4 @@
 #define LTC_ECC_SECP521R1
 #undef LTC_ECC521
 #endif
-
-// Custom additions
-#define ARGTYPE 3
-
 #endif /* TOMCRYPT_CUSTOM_H_ */

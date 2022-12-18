@@ -39,7 +39,11 @@
         "cstdarg": "c",
         "tomcrypt.h": "c",
         "kalloc.h": "c",
-        "crypto.h": "c"
+        "crypto.h": "c",
+        "tomcrypt_private.h": "c",
+        "tommath_private.h": "c",
+        "tommath_class.h": "c",
+        "tommath.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

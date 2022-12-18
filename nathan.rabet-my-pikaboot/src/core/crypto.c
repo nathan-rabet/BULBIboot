@@ -34,3 +34,44 @@ char *sha512_hex(unsigned char *buf, size_t len)
     hex[2 * SHA512_DIGEST_SIZE] = '\0';
     return hex;
 }
+
+// Parse PEM encoded RSA key
+bool parse_rsa_der(unsigned char *buf, size_t len, rsa_key *key)
+{
+    return rsa_import(buf, len, key) == CRYPT_OK;
+}
+
+// Verify RSA signature
+bool rsa_verify(unsigned char *buf, size_t len, unsigned char *sig,
+                size_t sig_len, rsa_key *key)
+{
+    unsigned char hash[SHA512_DIGEST_SIZE];
+    hash_state state = { 0 };
+    sha512_init(&state);
+    sha512_process(&state, buf, len);
+    sha512_done(&state, hash);
+    int stat = 0;
+    return rsa_verify_hash_ex(sig, sig_len, hash, SHA512_DIGEST_SIZE,
+                              LTC_PKCS_1_OAEP, 0, 0, &stat, key)
+        == CRYPT_OK;
+}
+
+// AES-256-CBC decryption
+bool aes256cbc_decrypt(unsigned char *buf, size_t len, unsigned char *key)
+{
+    unsigned char iv[AES256_IV_LENGTH] = { 0 };
+    int cipher;
+    symmetric_CBC cbc;
+
+    // Register AES cipher
+    cipher = register_cipher(&aes_desc);
+    if (cipher == -1)
+        return false;
+
+    // Start CBC mode
+    if (cbc_start(cipher, iv, key, AES256_KEY_LENGTH, 0, &cbc) != CRYPT_OK)
+        return false;
+
+    // Decrypt
+    return cbc_decrypt(buf, buf, len, &cbc) == CRYPT_OK;
+}

@@ -1,10 +1,23 @@
 #ifndef KALLOC_H
 #define KALLOC_H
-
+#include <stdbool.h>
 #include <stddef.h>
 
-// 50 MB
-#define HEAP_SIZE 52428800
+#include "int.h"
+
+typedef struct alloc_node_t
+{
+    bool used;
+    size_t size;
+#ifdef DEBUG
+    struct alloc_node_t *next;
+#endif
+    char block[];
+} alloc_node_t;
+
+extern u64 HEAP_START;
+#define HEAP_START_ADDR ((alloc_node_t *)(&HEAP_START))
+#define HEAP_SIZE (8 * 1024 * 1024) // 8 MiB
 
 /**
  * @brief Initialize the heap
