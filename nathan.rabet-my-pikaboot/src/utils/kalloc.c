@@ -61,7 +61,7 @@ void kfree(void *ptr)
 
     // Merge with next adjacent node if it is free
     alloc_node_t *adj_next =
-        (alloc_node_t *)((char *)alloc_node + alloc_node->size);
+        (alloc_node_t *)((char *)alloc_node->block + alloc_node->size);
     if (adj_next->used == false)
         alloc_node->size += adj_next->size;
 }

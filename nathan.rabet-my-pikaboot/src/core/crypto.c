@@ -38,7 +38,8 @@ char *sha512_hex(unsigned char *buf, size_t len)
 // Parse PEM encoded RSA key
 bool parse_rsa_der(unsigned char *buf, size_t len, rsa_key *key)
 {
-    return rsa_import(buf, len, key) == CRYPT_OK;
+    int ret = rsa_import(buf, len, key);
+    return ret == CRYPT_OK;
 }
 
 // Verify RSA signature

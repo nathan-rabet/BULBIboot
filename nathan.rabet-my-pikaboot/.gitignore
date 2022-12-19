@@ -15,3 +15,4 @@ build/*
 *.der
 *.pem
 *.a
+test.sh
