@@ -15,10 +15,10 @@ typedef struct alloc_node_t
 #endif
     u64 coin_coin;
     char block[];
-} alloc_node_t;
+} __attribute__((packed)) alloc_node_t;
 
-extern u64 HEAP_START;
-#define HEAP_START_ADDR ((alloc_node_t *)(&HEAP_START))
+extern alloc_node_t HEAP_START;
+#define HEAP_START_ADDR (&HEAP_START)
 #define HEAP_SIZE (8 * 1024 * 1024) // 8 MiB
 
 #define SET_ALLOC_NODE_CANARY(node)                                            \

@@ -23,8 +23,23 @@ void memdump(u64 start_addr, u64 range, u64 load_size)
         return;
     }
 
+    // Check overflow with RAM_START
+    u64 tmp;
+    if (__builtin_add_overflow(start_addr, RAM_START, &start_addr)
+        || __builtin_add_overflow(start_addr, range, &tmp))
+    {
+        kputs(CRLF "Overflow detected, aborting..." CRLF);
+        return;
+    }
+
+    if (start_addr + range > RAM_START + RAM_SIZE)
+    {
+        kputs(CRLF "Range is too big, aborting..." CRLF);
+        return;
+    }
+
     // Align start_addr with load_size
-    start_addr = start_addr - (start_addr % load_size);
+    start_addr -= (start_addr % load_size);
 
     for (u64 i = 0; i < range; i += MEMDUMP_LINE_SIZE)
     {

@@ -93,13 +93,12 @@ CERROR = -W -Werror -Wall -Wextra -Werror
 CSTD = -std=c99
 COPTIONS = -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss
 COPTIONS += -DBOOTLOADER_BIN_OFFSET_MB=$(BOOTLOADER_BIN_OFFSET_MB) -DKERNEL_BIN_OFFSET_MB=$(KERNEL_BIN_OFFSET_MB)
-COPTIM = -O0
+COPTIM = -O3
 
-# Assembler options
-ASDEBUG = -g
-ASOPTIM = -O0
-ASCPU ?= cortex-a72
-ASMACHINE = -march=armv8-a -mcpu=$(ASCPU)
+################################################################################
+# Machine options
+RAM_SIZE_GB=2
+RAM_SIZE_BYTES=$(shell echo $$(( $(RAM_SIZE_GB) * 1024 * 1024 * 1024 )))
 
 ###########################################################################
 #       ___           ___                         ___           ___       #
@@ -316,6 +315,7 @@ $(BUILD)/%.o: COPTIONS += -DBOOTLOADER_BIN_LEN=$(shell wc -c $(BUILD)/$(BOOTLOAD
 $(BUILD)/%.o: COPTIONS += -DBOOTLOADER_CRC=$(shell crc32 $(BUILD)/$(BOOTLOADER_IMG) | sed 's/^\(.*\)$$/0x\1/')
 $(BUILD)/%.o: COPTIONS += -DKERNEL_BIN_LEN=$(shell wc -c $(KERNEL_PATH) | cut -d' ' -f1)
 $(BUILD)/%.o: COPTIONS += -DKERNEL_CRC=$(shell crc32 $(KERNEL_PATH) | sed 's/^\(.*\)$$/0x\1/')
+$(BUILD)/%.o: COPTIONS += -DRAM_SIZE=$(RAM_SIZE_BYTES)
 $(BUILD)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(COPTIONS) $(CSTD) $(CINCLUDE) $(CDEBUG) $(CERROR) $(COPTIM) -c $< -o $@

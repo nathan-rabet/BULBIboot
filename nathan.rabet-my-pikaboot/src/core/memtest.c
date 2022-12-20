@@ -5,12 +5,6 @@
 #include "uart.h"
 #include "virt.h"
 
-#ifndef RAM_SIZE_GB
-#    define RAM_SIZE_GB 2
-#endif
-
-#define RAM_SIZE (RAM_SIZE_GB * 1024UL * 1024UL * 1024UL)
-
 #define MEMTEST_VALUE_1 0x69UL
 #define MEMTEST_VALUE_2 0xB0UL
 
@@ -147,17 +141,24 @@ void memtest(u64 base_addr, u64 size, u8 granularity)
         return;
     }
 
-    // Check if addr + size is in the RAM and if there is an overflow
-    if (base_addr + size > RAM_SIZE && base_addr + size < base_addr)
+    u64 tmp;
+    if (__builtin_add_overflow(base_addr, RAM_START, &base_addr)
+        || __builtin_add_overflow(base_addr, size, &tmp))
     {
-        kputs("Invalid memory range for memtest" CRLF);
+        kputs(CRLF "Overflow detected, aborting..." CRLF);
+        return;
+    }
+
+    if (base_addr + size > RAM_START + RAM_SIZE)
+    {
+        kputs(CRLF "Range is too big, aborting..." CRLF);
         return;
     }
 
     kputs(CRLF "Testing memory from ");
-    kputs(itoa64hex(RAM_START + base_addr));
+    kputs(itoa64hex(base_addr));
     kputs(" to ");
-    kputs(itoa64hex((RAM_START + base_addr) + size));
+    kputs(itoa64hex(base_addr + size));
     kputs(" with granularity ");
     kputs(itoa64(granularity));
     kputs(CRLF);
@@ -166,8 +167,8 @@ void memtest(u64 base_addr, u64 size, u8 granularity)
     reset_memtest_errors();
 
     // Test the memory
-    for (char *addr = (char *)RAM_START + base_addr;
-         (u64)addr < RAM_START + base_addr + size; addr += granularity)
+    for (char *addr = (char *)base_addr; (u64)addr < base_addr + size;
+         addr += granularity)
     {
         memtest_xor(addr, granularity);
         memtest_byte_per_byte(addr, granularity);
@@ -176,7 +177,7 @@ void memtest(u64 base_addr, u64 size, u8 granularity)
         memtest_shift(addr, granularity);
 
         // On each percent, print ONE dot
-        if (((u64)addr - (RAM_START + base_addr)) % (size / 100) == 0)
+        if (((u64)addr - base_addr) % (size / 100) == 0)
             kputc('.');
     }
 
