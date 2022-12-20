@@ -122,12 +122,12 @@ images: $(BUILD)/$(DECRYPTOR_IMG) $(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG)
 .PHONY: boot
 boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
 	qemu-system-aarch64 \
-	-machine virt,gic-version=3 \
+	-machine virt,virtualization=true,secure=on \
 	-nographic \
 	-cpu cortex-a72 \
 	-kernel $(BUILD)/$(PFLASH_BIN) \
 	-initrd $(INITRD_PATH) \
-	-serial mon:stdio \
+	-serial pty \
 	-m 2G \
 	-smp 1 \
 	-d in_asm \
@@ -258,7 +258,9 @@ cleancrypto:
 	$(BUILD)/$(DECRYPTOR_ELF) \
 	$(BUILD)/$(DECRYPTOR_IMG) \
 	$(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG_KEY) \
-	$(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG_KEY_HEX)
+	$(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG_KEY_HEX) \
+	$(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG) \
+	$(BUILD)/$(BOOTLOADER_DER_PUBLIC_HEX)
 
 ################################################################################
 # libtommath
@@ -311,8 +313,9 @@ allclean: clean libclean
 # Objects files
 ################################################################################
 $(BUILD)/%.o: COPTIONS += -DBOOTLOADER_BIN_LEN=$(shell wc -c $(BUILD)/$(BOOTLOADER_IMG) | cut -d' ' -f1)
-$(BUILD)/%.o: COPTIONS += -DBOOTLOADER_CRC=$(shell crc32 $(BUILD)/$(BOOTLOADER_IMG))
-$(BUILD)/%.o: COPTIONS += -DKERNEL_CRC=$(shell crc32 $(KERNEL_PATH))
+$(BUILD)/%.o: COPTIONS += -DBOOTLOADER_CRC=$(shell crc32 $(BUILD)/$(BOOTLOADER_IMG) | sed 's/^\(.*\)$$/0x\1/')
+$(BUILD)/%.o: COPTIONS += -DKERNEL_BIN_LEN=$(shell wc -c $(KERNEL_PATH) | cut -d' ' -f1)
+$(BUILD)/%.o: COPTIONS += -DKERNEL_CRC=$(shell crc32 $(KERNEL_PATH) | sed 's/^\(.*\)$$/0x\1/')
 $(BUILD)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(COPTIONS) $(CSTD) $(CINCLUDE) $(CDEBUG) $(CERROR) $(COPTIM) -c $< -o $@

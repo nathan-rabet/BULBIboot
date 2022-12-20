@@ -75,6 +75,9 @@ bool aes256cbc_decrypt(unsigned char *buf, size_t len, const unsigned char *key)
     if (ret != CRYPT_OK)
         return false;
 
+    // Align length to block size
+    len = (len + AES256_KEY_LEN - 1) & ~(AES256_KEY_LEN - 1);
+
     // Decrypt
     return cbc_decrypt(buf, buf, len, &cbc) == CRYPT_OK;
 }

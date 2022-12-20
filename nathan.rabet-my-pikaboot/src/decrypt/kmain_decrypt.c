@@ -41,6 +41,7 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, void *x4)
     // Jump to decrypted bootloader
     kputs("Jumping to bootloader" CRLF);
     void (*bootloader)(u64, u64, u64, u64, void *) =
-        (void (*)(u64, u64, u64, u64, void *))x4 + BOOTLOADER_BIN_ADDR;
+        (void (*)(u64, u64, u64, u64, void *))(unsigned char *)x4
+        + BOOTLOADER_BIN_ADDR;
     bootloader(x0, x1, x2, x3, x4);
 }

@@ -20,20 +20,10 @@
 #define CRLF "\r\n"
 #define PIKABOOT_CONSOLE() kputs(CRLF "PIKABROUT $ ")
 
-static void init_crypto(void)
-{
-    ltc_mp = ltm_desc;
-    register_all_ciphers();
-    register_all_hashes();
-}
-
 void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
 {
     // Initialize malloc heap
     kalloc_init();
-
-    // Initialize crypto
-    init_crypto();
 
     // Setup UART0
     pl011_setup((volatile uart_t *)UART0_ADDR);
