@@ -5,9 +5,10 @@
             "includePath": [
                 "${default}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/**",
+                "${workspaceFolder}/build",
                 "${workspaceFolder}/modules/libtomcrypt/src/headers",
-                "${workspaceFolder}/modules/libtommath"
+                "${workspaceFolder}/modules/libtommath",
+                "${workspaceFolder}/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

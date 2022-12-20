@@ -43,7 +43,9 @@
         "tomcrypt_private.h": "c",
         "tommath_private.h": "c",
         "tommath_class.h": "c",
-        "tommath.h": "c"
+        "tommath.h": "c",
+        "*.hex": "c",
+        "pflash.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

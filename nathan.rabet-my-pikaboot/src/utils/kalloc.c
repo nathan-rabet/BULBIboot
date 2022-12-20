@@ -7,25 +7,29 @@
 
 #define ALLOC_HEADER_SZ offsetof(alloc_node_t, block)
 
-bool is_init = false;
+#define OVERFLOW_ADDITIONNAL_SZ 1024
 
+static bool is_init = false;
 void kalloc_init(void)
 {
     memset(HEAP_START_ADDR, 0, HEAP_SIZE);
     HEAP_START_ADDR->size = HEAP_SIZE;
+    SET_ALLOC_NODE_CANARY(HEAP_START_ADDR);
     is_init = true;
 }
 
 void *kmalloc(size_t size)
 {
-    kassert(is_init);
+    kassertm(is_init, "Heap is not initialized");
 
     if (size == 0)
         return NULL;
 
+    size += OVERFLOW_ADDITIONNAL_SZ;
     for (alloc_node_t *curr = HEAP_START_ADDR; curr->size != 0;
          curr = (alloc_node_t *)((char *)curr->block + curr->size))
     {
+        ALLOC_NODE_CANARY_INTEGRITY(curr);
         if (!curr->used && curr->size >= size)
         {
             // Modifying next adjacent node (if it is free)
@@ -34,7 +38,14 @@ void *kmalloc(size_t size)
 
             // Modifying next adjacent node (if it is free)
             if (adj_next->used == false)
+            {
+                SET_ALLOC_NODE_CANARY(adj_next);
                 adj_next->size = curr->size - size;
+            }
+            else
+            {
+                ALLOC_NODE_CANARY_INTEGRITY(adj_next);
+            }
 
             // Modifying current node
             curr->used = true;
@@ -52,18 +63,20 @@ void *kmalloc(size_t size)
 
 void kfree(void *ptr)
 {
-    if (ptr == NULL)
-        return;
+    if (ptr)
+    {
+        alloc_node_t *alloc_node =
+            (alloc_node_t *)((char *)ptr - ALLOC_HEADER_SZ);
+        ALLOC_NODE_CANARY_INTEGRITY(alloc_node);
 
-    alloc_node_t *alloc_node = (alloc_node_t *)((char *)ptr - ALLOC_HEADER_SZ);
+        alloc_node->used = false;
 
-    alloc_node->used = false;
-
-    // Merge with next adjacent node if it is free
-    alloc_node_t *adj_next =
-        (alloc_node_t *)((char *)alloc_node->block + alloc_node->size);
-    if (adj_next->used == false)
-        alloc_node->size += adj_next->size;
+        // Merge with next adjacent node if it is free
+        alloc_node_t *adj_next =
+            (alloc_node_t *)((char *)alloc_node->block + alloc_node->size);
+        if (adj_next->used == false)
+            alloc_node->size += adj_next->size;
+    }
 }
 
 void *kcalloc(size_t nmemb, size_t size)
@@ -90,6 +103,7 @@ void *krealloc(void *ptr, size_t size)
     }
 
     alloc_node_t *alloc_node = (alloc_node_t *)((char *)ptr - ALLOC_HEADER_SZ);
+    ALLOC_NODE_CANARY_INTEGRITY(alloc_node);
 
     if (alloc_node->size >= size)
         return ptr;

@@ -6,10 +6,16 @@
 
 #define STRINGIFY(x) #x
 
-void kassert(int condition)
+void kassert(bool condition)
 {
     if (!condition)
-        panic("Assertion failed: " STRINGIFY(condition));
+        panic("Assertion failed at " __FILE__ ":" STRINGIFY(__LINE__));
+}
+
+void kassertm(bool condition, const char *msg)
+{
+    if (!condition)
+        panic(msg);
 }
 
 void panic(const char *msg)

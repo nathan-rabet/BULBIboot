@@ -1,10 +1,22 @@
 {
     "configurations": [
-        // Join GDB to QEMU
         {
             "type": "gdb",
             "request": "attach",
-            "name": "GDB - QEMU",
+            "name": "GDB DECRYPTOR - QEMU",
+            "executable": "${workspaceFolder}/build/decryptor_pikaboot.elf",
+            "target": "localhost:6666",
+            "remote": true,
+            "cwd": "${workspaceFolder}",
+            "showDevDebugOutput": false,
+            "gdbpath": "/usr/bin/gdb-multiarch",
+            "valuesFormatting": "prettyPrinters",
+            // "preLaunchTask": "make boot (gdb)"
+        },
+        {
+            "type": "gdb",
+            "request": "attach",
+            "name": "GDB BOOTLOADER - QEMU",
             "executable": "${workspaceFolder}/build/pikaboot.elf",
             "target": "localhost:6666",
             "remote": true,

@@ -1,10 +1,12 @@
 #ifndef CRYPTO_H
 #define CRYPTO_H
 
-#define SHA512_DIGEST_SIZE 64
+extern const unsigned char pflash_bin_sig;
 
-#define AES256_KEY_LENGTH (256 >> 3)
-#define AES256_IV_LENGTH (128 >> 3)
+#define SHA512_DIGEST_LEN 64
+
+#define AES256_KEY_LEN (256 >> 3)
+#define AES256_IV_LEN (128 >> 3)
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -41,6 +43,35 @@ char *sha512_hex(unsigned char *buf, size_t len);
  * @param len The length of the buffer
  * @param key The RSA key to use
  */
-bool parse_rsa_der(unsigned char *buf, size_t len, rsa_key *key);
+bool parse_rsa_der(const unsigned char *buf, size_t len, rsa_key *key);
+
+/**
+ * @brief Verify the signature of a buffer using RSA
+ *
+ * @note This function uses the tomcrypt library
+ *
+ * @param buf The buffer to verify
+ * @param len The length of the buffer
+ * @param sig The signature of the buffer
+ * @param sig_len The length of the signature
+ * @param key The RSA key to use
+ */
+bool rsa_verify_sig(const unsigned char *buf, size_t len,
+                    const unsigned char *sig, size_t sig_len, rsa_key *key);
+
+/**
+ * @brief Decrypt a buffer using AES-256-CBC
+ *
+ * @note This function uses the tomcrypt library
+ * @note The IV is assumed to be 0
+ * @note The buffer is modified in place
+ *
+ * @param buf The buffer to decrypt
+ * @param len The length of the buffer
+ * @param key The key to use
+ * @return true if the decryption was successful, false otherwise
+ */
+bool aes256cbc_decrypt(unsigned char *buf, size_t len,
+                       const unsigned char *key);
 
 #endif /* CRYPTO_H */
