@@ -9,9 +9,9 @@ static const unsigned char bootloader_bin_sig[] = {
 #include "bulbiboot.img.sig.hex"
 };
 
-// AES 256 CBC key (no salt)
-static const unsigned char bootloader_aes_key[] = {
-#include "bulbiboot.img.enc.key.hex"
+// SHA256 hash of AES key
+static const unsigned char aes_key_hash[] = {
+#include "bulbiboot.img.enc.key.hash.hex"
 };
 
 // Distinguished Encoding Rules (DER) ASN.1 RSA public key
@@ -38,7 +38,15 @@ void verify_pflash(void *pflash_start)
     kassertm(is_verified, "Failed to verify bootloader signature");
 }
 
-void decrypt_pflash(void *pflash_start)
+bool verify_bootloader_aes_key(const unsigned char *bootloader_aes_key)
+{
+    unsigned char *bootloader_aes_key_hash = sha256(bootloader_aes_key, 32);
+    bool is_verified =
+        memcmp(bootloader_aes_key_hash, aes_key_hash, SHA256_DIGEST_LEN) == 0;
+    return is_verified;
+}
+
+void decrypt_pflash(void *pflash_start, const unsigned char *bootloader_aes_key)
 {
     size_t bootloader_bin_len = BOOTLOADER_BIN_LEN;
     size_t bootloader_bin_addr = BOOTLOADER_BIN_ADDR;

@@ -1,4 +1,10 @@
 {
+    "C_Cpp.files.exclude": {
+        "**/.vscode": true,
+        "**/.vs": true,
+        "modules/**": true,
+        "build/**": true
+    },
     "files.associations": {
         "kstring.h": "c",
         "platform.h": "c",

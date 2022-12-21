@@ -11,7 +11,7 @@
             "showDevDebugOutput": false,
             "gdbpath": "/usr/bin/gdb-multiarch",
             "valuesFormatting": "prettyPrinters",
-            // "preLaunchTask": "make boot (gdb)"
+            // "preLaunchTask": "make boot (gdb) - pflash.bin.enc"
         },
         {
             "type": "gdb",
@@ -25,7 +25,7 @@
             "gdbpath": "/usr/bin/gdb-multiarch",
             "valuesFormatting": "prettyPrinters",
             
-            // "preLaunchTask": "make boot (gdb)"
+            // "preLaunchTask": "make boot (gdb) - pflash.bin"
         },
         {
             "name": "PYTHON - Emergency boot server",

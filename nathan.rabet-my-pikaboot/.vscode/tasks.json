@@ -2,10 +2,17 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "make boot (gdb)",
+            "label": "make boot (gdb) - pflash.bin",
             "type": "shell",
-            "command": "make boot_gdb",
+            "command": "make boot BOOT_IMG=build/pflash.bin",
+            "isBackground": true
+        },
+        {
+            "label": "make boot (gdb) - pflash.bin.enc",
+            "type": "shell",
+            "command": "make boot BOOT_IMG=build/pflash.bin.enc",
             "isBackground": true
         }
+
     ]
 }
