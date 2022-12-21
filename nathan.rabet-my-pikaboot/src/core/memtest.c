@@ -1,5 +1,6 @@
 #include "memtest.h"
 
+#include "console.h"
 #include "kstring.h"
 #include "number.h"
 #include "uart.h"
@@ -10,7 +11,7 @@
 
 static u64 memtest_shift_errors = 0;
 static u64 memtest_xor_errors = 0;
-static u64 memtest_byte_per_byte_errors = 0;
+static u64 memtest_bitwise_errors = 0;
 static u64 memtest_add_errors = 0;
 static u64 memtest_sub_errors = 0;
 
@@ -49,7 +50,7 @@ static u64 get(void *addr, u8 granularity)
     case 8:
         return *(u64 *)addr;
     default:
-        kputs(CRLF "Invalid granularity" CRLF);
+        kputs(CRLF YELLOW_STR("Invalid granularity") CRLF);
         return 0;
     }
 }
@@ -94,14 +95,13 @@ static void memtest_xor(char *addr, u8 granularity)
     memtest_xor_errors += get(addr, granularity) != MEMTEST_VALUE_1;
 }
 
-static void memtest_byte_per_byte(char *addr, u8 granularity)
+static void memtest_bitwise(char *addr, u8 granularity)
 {
     for (u64 i = 0; i < granularity; i++)
     {
         set(addr, 0, granularity);
         set(addr + i, 0xff, 1);
-        memtest_byte_per_byte_errors +=
-            get(addr, granularity) != (0xffUL << (i * 8));
+        memtest_bitwise_errors += get(addr, granularity) != (0xffUL << (i * 8));
     }
 }
 
@@ -125,6 +125,9 @@ static void memtest_sub(char *addr, u8 granularity)
     }
 }
 
+extern u64 STACK_TOP;
+#define STACK_TOP_ADDR ((void *)&STACK_TOP)
+#define UART_CHECK_ITER 1000
 void memtest(u64 base_addr, u64 size, u8 granularity)
 {
     // Check the granularity
@@ -136,7 +139,7 @@ void memtest(u64 base_addr, u64 size, u8 granularity)
     case 8:
         break;
     default:
-        kputs(CRLF "Invalid granularity for memtest" CRLF);
+        kputs(CRLF YELLOW_STR("Invalid granularity for memtest") CRLF);
         kputs("Must be 1, 2, 4 or 8" CRLF);
         return;
     }
@@ -145,13 +148,13 @@ void memtest(u64 base_addr, u64 size, u8 granularity)
     if (__builtin_add_overflow(base_addr, RAM_START, &base_addr)
         || __builtin_add_overflow(base_addr, size, &tmp))
     {
-        kputs(CRLF "Overflow detected, aborting..." CRLF);
+        kputs(CRLF RED_STR("Overflow detected, aborting...") CRLF);
         return;
     }
 
     if (base_addr + size > RAM_START + RAM_SIZE)
     {
-        kputs(CRLF "Range is too big, aborting..." CRLF);
+        kputs(CRLF YELLOW_STR("Range is too big, aborting...") CRLF);
         return;
     }
 
@@ -161,36 +164,76 @@ void memtest(u64 base_addr, u64 size, u8 granularity)
     kputs(itoa64hex(base_addr + size));
     kputs(" with granularity ");
     kputs(itoa64(granularity));
-    kputs(CRLF);
+    kputs(CRLF CRLF);
+    kputs("Press 'q' to abort" CRLF);
 
     // Reset the errors
     reset_memtest_errors();
+
+    // UART 'q' buffer
+    unsigned char quit = 0;
 
     // Test the memory
     for (char *addr = (char *)base_addr; (u64)addr < base_addr + size;
          addr += granularity)
     {
+        // Each UART_CHECK_ITER iterations, check UART
+        if (((u64)addr - base_addr) % (UART_CHECK_ITER * granularity) == 0)
+        {
+            // Check if there is something in the UART buffer
+            if (uart_read(&quit, sizeof(unsigned char),
+                          (volatile uart_t *)UART0_ADDR)
+                > 0)
+            {
+                // If the user pressed 'q', abort the test
+                if (quit == 'q')
+                {
+                    kputs(CRLF "Aborting..." CRLF);
+                    break;
+                }
+            }
+        }
+
+        // Skip [TEXT_START, STACK_TOP_ADDR]
+        if ((u64)addr >= TEXT_START && (u64)addr <= (u64)STACK_TOP_ADDR)
+        {
+            kputs(YELLOW_STR("\rSkipping [TEXT_START, STACK_TOP] range...")
+                      CRLF);
+            addr = STACK_TOP_ADDR;
+            continue;
+        }
+
         memtest_xor(addr, granularity);
-        memtest_byte_per_byte(addr, granularity);
+        memtest_shift(addr, granularity);
+        memtest_bitwise(addr, granularity);
         memtest_add(addr, granularity);
         memtest_sub(addr, granularity);
-        memtest_shift(addr, granularity);
 
-        // On each percent, print ONE dot
-        if (((u64)addr - base_addr) % (size / 100) == 0)
-            kputc('.');
+        // Printing the progress, reset the cursor
+        kputs("\r");
+        kputs(itoa64hex((u64)base_addr));
+        kputs(" -> [");
+        kputs("\033[34m");
+        kputs(itoa64hex((u64)addr));
+        kputs("\033[0m");
+        kputs("] -> ");
+        kputs(itoa64hex(base_addr + size));
     }
 
+    kputs(CRLF GREEN_STR("Memory test finished successfully!") CRLF);
+
     // Print the results
-    kputs(CRLF "Memtest results:" CRLF);
-    kputs("\tShift errors: ");
-    kputs(itoa64(memtest_shift_errors));
-    kputs(CRLF "\tXOR errors: ");
+    kputs(CRLF "RESULTS" CRLF);
+    kputs("--------------------------------" CRLF CRLF);
+    kputs("\tXOR errors:\t");
     kputs(itoa64(memtest_xor_errors));
-    kputs(CRLF "\tByte per byte errors: ");
-    kputs(itoa64(memtest_byte_per_byte_errors));
-    kputs(CRLF "\tAdd errors: ");
+    kputs(CRLF "\tSHIFT errors:\t");
+    kputs(itoa64(memtest_shift_errors));
+    kputs(CRLF "\tBITWISE errors:\t");
+    kputs(itoa64(memtest_bitwise_errors));
+    kputs(CRLF "\tADD errors:\t");
     kputs(itoa64(memtest_add_errors));
-    kputs(CRLF "\tSub errors: ");
+    kputs(CRLF "\tSUB errors:\t");
     kputs(itoa64(memtest_sub_errors));
+    kputs(CRLF CRLF);
 }

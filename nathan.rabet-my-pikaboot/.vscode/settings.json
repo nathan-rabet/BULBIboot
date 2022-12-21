@@ -45,7 +45,10 @@
         "tommath_class.h": "c",
         "tommath.h": "c",
         "*.hex": "c",
-        "pflash.h": "c"
+        "pflash.h": "c",
+        "asm.h": "c",
+        "time.h": "c",
+        "console.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

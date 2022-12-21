@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <time.h>
 
-#define CRLF "\r\n"
 #ifndef MIN
 #    define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
@@ -37,6 +36,8 @@ void *memmove(void *dest, const void *src, size_t n);
 size_t tokenlen(const char *str, const char *delim);
 
 int memcmp(const void *s1, const void *s2, size_t n);
+
+char *strcpy(char *dest, const char *src);
 
 char *strncpy(char *dest, const char *src, size_t n);
 

@@ -157,32 +157,3 @@ void uart_enable_interrupts(volatile uart_t *uart_addr)
 {
     UART_REGISTER(uart_addr, IMSC_OFFSET) = 0x7FF;
 }
-
-// ------------------------------------------------------------
-// UART0 is for user input/output
-// ------------------------------------------------------------
-
-void kputc(char c)
-{
-    if (uart_write((unsigned char *)&c, 1, (uart_t *)UART0_ADDR) == (u64)-1)
-        return; // panic("UART0 is not working");
-}
-
-char kgetc()
-{
-    while (!check_uart_read_ready((volatile uart_t *)UART0_ADDR))
-        ;
-
-    char c = 0;
-    if (uart_read((unsigned char *)&c, 1, (uart_t *)UART0_ADDR) == (u64)-1)
-        return c; // panic("UART0 is not working");
-
-    return c;
-}
-
-void kputs(const char *s)
-{
-    if (uart_write((unsigned char *)s, strlen(s), (uart_t *)UART0_ADDR)
-        == (u64)-1)
-        return; // panic("UART0 is not working");
-}

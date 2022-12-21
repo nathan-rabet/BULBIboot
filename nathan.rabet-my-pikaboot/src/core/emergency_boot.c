@@ -2,6 +2,7 @@
 
 #include "ascii.h"
 #include "asm.h"
+#include "console.h"
 #include "crc32.h"
 #include "int.h"
 #include "kassert.h"
@@ -99,15 +100,6 @@ static void receive_file(volatile uart_t *emergency_uart, u64 file_size)
 
         transfered_file_size += file_packet.size;
     }
-
-    // -------------------------------------------------------------------------
-    // PRINT FILE CRC
-    // -------------------------------------------------------------------------
-    u32 crc = crc32((unsigned char *)transfered_file, transfered_file_size);
-
-    uart_write((unsigned char *)"CRC: ", 5, emergency_uart);
-    uart_write((unsigned char *)itoa64hex(crc), 10, emergency_uart);
-    uart_write((unsigned char *)CRLF, sizeof(CRLF), emergency_uart);
 
     // -------------------------------------------------------------------------
     // BOOT LINUX KERNEL

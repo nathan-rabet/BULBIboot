@@ -158,29 +158,4 @@ void uart_disable_interrupts(volatile uart_t *uart_addr);
  */
 void uart_enable_interrupts(volatile uart_t *uart_addr);
 
-// ------------------------------------------------------------
-// Friendly functions
-// ------------------------------------------------------------
-
-/**
- * @brief Write a character to the UART0
- *
- * @param c The character to write
- */
-void kputc(char c);
-
-/**
- * @brief Read a character from the UART0
- *
- * @return char The character read
- */
-char kgetc();
-
-/**
- * @brief Write a string to the UART0
- *
- * @param s The string to write
- */
-void kputs(const char *s);
-
 #endif /* UART_H */

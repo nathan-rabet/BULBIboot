@@ -23,7 +23,7 @@ AS=$(CROSS_COMPILE)as
 
 ################################################################################
 # Bootloader options
-BOOTLOADER_NAME=pikaboot
+BOOTLOADER_NAME=bulbiboot
 
 BOOTLOADER_ELF=$(BOOTLOADER_NAME).elf
 BOOTLOADER_IMG=$(BOOTLOADER_NAME).img
@@ -36,6 +36,9 @@ BOOTLOADER_BIN_OFFSET_MB=10
 KERNEL_BIN_OFFSET_MB=50
 
 PFLASH_BIN=pflash.bin
+ENCRYPTED_PFLASH_BIN=$(PFLASH_BIN).enc
+
+BOOT_IMG?=$(BUILD)/$(ENCRYPTED_PFLASH_BIN)
 
 BOOTLOADER_PEM_PRIVATE=$(BOOTLOADER_IMG).pem
 BOOTLOADER_DER_PUBLIC=$(BOOTLOADER_IMG).pub.der
@@ -119,14 +122,14 @@ images: $(BUILD)/$(DECRYPTOR_IMG) $(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG)
 	$(info Images generated successfully)
 
 .PHONY: boot
-boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
+boot: $(BOOT_IMG) $(INITRD_PATH)
 	qemu-system-aarch64 \
-	-machine virt,virtualization=true,secure=on \
+	-machine virt,virtualization=on,secure=on \
 	-nographic \
 	-cpu cortex-a72 \
-	-kernel $(BUILD)/$(PFLASH_BIN) \
+	-kernel $(BOOT_IMG) \
 	-initrd $(INITRD_PATH) \
-	-serial pty \
+	-serial mon:stdio \
 	-m 2G \
 	-smp 1 \
 	-d in_asm \
@@ -137,9 +140,14 @@ boot: $(BUILD)/$(PFLASH_BIN) $(INITRD_PATH)
 boot_gdb: COPTIONS += -DDEBUG
 boot_gdb: QEMU_ADDITIONAL_FLAGS=-gdb tcp::6666 -S
 boot_gdb: boot
-	
+
+.PHONY: $(PFLASH_BIN)
 $(PFLASH_BIN): $(BUILD)/$(PFLASH_BIN)
 	$(info $(PFLASH_BIN) generated successfully)
+
+.PHONY: $(ENCRYPTED_PFLASH_BIN)
+$(ENCRYPTED_PFLASH_BIN): $(BUILD)/$(ENCRYPTED_PFLASH_BIN)
+	$(info $(ENCRYPTED_PFLASH_BIN) generated successfully)
 
 $(BUILD)/$(BOOTLOADER_ELF): $(OBJS_CORE) $(LIB_TOMCRYPT) $(LIB_TOMMATH) $(LIB_GCC)
 	$(LD) $(LDFLAGS) -o $@ $^
@@ -147,7 +155,12 @@ $(BUILD)/$(BOOTLOADER_ELF): $(OBJS_CORE) $(LIB_TOMCRYPT) $(LIB_TOMMATH) $(LIB_GC
 $(BUILD)/$(BOOTLOADER_IMG): $(BUILD)/$(BOOTLOADER_ELF)
 	$(CROSS_COMPILE)objcopy -O binary $< $@
 
-$(BUILD)/$(PFLASH_BIN): images $(KERNEL_PATH)
+$(BUILD)/$(PFLASH_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
+	$(V)dd if=/dev/zero of=$@ bs=1M count=512 seek=$(BOOTLOADER_BIN_OFFSET_MB)
+	$(V)dd if=$(BUILD)/$(BOOTLOADER_IMG) of=$@ conv=notrunc bs=1M count=10
+	$(V)dd if=$(KERNEL_PATH) of=$@ conv=notrunc bs=1M seek=$(KERNEL_BIN_OFFSET_MB)
+
+$(BUILD)/$(ENCRYPTED_PFLASH_BIN): $(BUILD)/$(DECRYPTOR_IMG) $(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG) $(KERNEL_PATH)
 	$(V)dd if=/dev/zero of=$@ bs=1M count=512 seek=$(DECRYPTOR_BIN_OFFSET_MB)
 	$(V)dd if=$(BUILD)/$(DECRYPTOR_IMG) of=$@ conv=notrunc bs=1M count=$(BOOTLOADER_BIN_OFFSET_MB)
 	$(V)dd if=$(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG) of=$@ conv=notrunc bs=1M seek=$(BOOTLOADER_BIN_OFFSET_MB) count=10
@@ -259,7 +272,8 @@ cleancrypto:
 	$(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG_KEY) \
 	$(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG_KEY_HEX) \
 	$(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG) \
-	$(BUILD)/$(BOOTLOADER_DER_PUBLIC_HEX)
+	$(BUILD)/$(BOOTLOADER_DER_PUBLIC_HEX) \
+	$(BUILD)/$(ENCRYPTED_PFLASH_BIN)
 
 ################################################################################
 # libtommath

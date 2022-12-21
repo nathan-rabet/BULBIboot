@@ -1,5 +1,6 @@
 #include "memdump.h"
 
+#include "console.h"
 #include "kstring.h"
 #include "number.h"
 #include "uart.h"
@@ -18,23 +19,21 @@ void memdump(u64 start_addr, u64 range, u64 load_size)
     case 8:
         break;
     default:
-        kputs(CRLF "Invalid load size" CRLF);
+        kputs(CRLF YELLOW_STR("Invalid load size") CRLF);
         kputs("Valid load sizes are 1, 2, 4 and 8" CRLF);
         return;
     }
 
-    // Check overflow with RAM_START
     u64 tmp;
-    if (__builtin_add_overflow(start_addr, RAM_START, &start_addr)
-        || __builtin_add_overflow(start_addr, range, &tmp))
+    if (__builtin_add_overflow(start_addr, range, &tmp))
     {
-        kputs(CRLF "Overflow detected, aborting..." CRLF);
+        kputs(CRLF RED_STR("Overflow detected, aborting...") CRLF);
         return;
     }
 
     if (start_addr + range > RAM_START + RAM_SIZE)
     {
-        kputs(CRLF "Range is too big, aborting..." CRLF);
+        kputs(CRLF YELLOW_STR("Range is too big, aborting...") CRLF);
         return;
     }
 

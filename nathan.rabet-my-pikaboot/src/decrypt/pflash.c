@@ -6,17 +6,17 @@
 
 // Signature of bootloader (SHA512 + RSA)
 static const unsigned char bootloader_bin_sig[] = {
-#include "pikaboot.img.sig.hex"
+#include "bulbiboot.img.sig.hex"
 };
 
 // AES 256 CBC key (no salt)
 static const unsigned char bootloader_aes_key[] = {
-#include "pikaboot.img.enc.key.hex"
+#include "bulbiboot.img.enc.key.hex"
 };
 
 // Distinguished Encoding Rules (DER) ASN.1 RSA public key
 static const unsigned char bootloader_pub_der_key[] = {
-#include "pikaboot.img.pub.der.hex"
+#include "bulbiboot.img.pub.der.hex"
 };
 
 void verify_pflash(void *pflash_start)

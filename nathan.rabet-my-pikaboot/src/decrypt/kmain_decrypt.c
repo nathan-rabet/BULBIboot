@@ -1,3 +1,4 @@
+#include "console.h"
 #include "crypto.h"
 #include "kalloc.h"
 #include "kstring.h"
@@ -13,12 +14,6 @@ static void init_crypto(void)
 
 void kmain(u64 x0, u64 x1, u64 x2, u64 x3, void *x4)
 {
-    (void)x0;
-    (void)x1;
-    (void)x2;
-    (void)x3;
-    (void)x4;
-
     // Initialize malloc heap
     kalloc_init();
 
@@ -31,12 +26,12 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, void *x4)
     // Verify encrypted bootloader signature
     kputs("Bootloader signature verification: ");
     verify_pflash(x4);
-    kputs("OK" CRLF);
+    kputs(GREEN_STR("OK") CRLF);
 
     // Decrypt bootloader
     kputs("Bootloader decryption: ");
     decrypt_pflash(x4);
-    kputs("OK" CRLF);
+    kputs(GREEN_STR("OK") CRLF);
 
     // Jump to decrypted bootloader
     kputs("Jumping to bootloader" CRLF);

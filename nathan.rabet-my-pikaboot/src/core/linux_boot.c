@@ -1,6 +1,7 @@
 #include "linux_boot.h"
 
 #include "asm.h"
+#include "console.h"
 #include "crc32.h"
 #include "kassert.h"
 #include "kstring.h"
@@ -22,12 +23,12 @@ void linux_boot()
     kassertm(crc == KERNEL_CRC, "Kernel CRC32 mismatch");
     kputs("OK" CRLF);
 
-    // Print current EL
+    // Print current Exception Level (EL)
     u64 el;
     ASM("mrs %0, CurrentEL" : "=r"(el));
     el >>= 2;
     el &= 0x3;
-    kputs("Current EL: ");
+    kputs("Current ARM Exception Level : EL");
     kputs(itoa64(el));
     kputs(CRLF);
 

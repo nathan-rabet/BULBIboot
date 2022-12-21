@@ -52,6 +52,8 @@ char *strtok(char *str, const char *delim)
 
 char *strtok_r(char *str, const char *delim, char **last)
 {
+    if (str == NULL && *last == NULL)
+        return NULL;
     if (str == NULL)
         str = *last;
     str += strspn(str, delim);
@@ -71,7 +73,7 @@ size_t strspn(const char *str, const char *accept)
     const char *a;
     size_t count = 0;
 
-    for (p = str; *p != '\0'; ++p)
+    for (p = str; p && *p != '\0'; ++p)
     {
         for (a = accept; *a != '\0'; ++a)
         {
@@ -92,7 +94,7 @@ size_t strcspn(const char *str, const char *reject)
     const char *r;
     size_t count = 0;
 
-    for (p = str; *p != '\0'; ++p)
+    for (p = str; p && *p != '\0'; ++p)
     {
         for (r = reject; *r != '\0'; ++r)
         {
@@ -123,6 +125,9 @@ size_t strlen(const char *str)
 
 size_t tokenlen(const char *str, const char *delim)
 {
+    if (str == NULL)
+        return 0;
+
     size_t len = 0;
     while (str[len] && !strchr(delim, str[len]))
         len++;
@@ -159,6 +164,14 @@ int memcmp(const void *s1, const void *s2, size_t n)
         p2++;
     }
     return 0;
+}
+
+char *strcpy(char *dest, const char *src)
+{
+    char *ret = dest;
+    while ((*dest++ = *src++))
+        ;
+    return ret;
 }
 
 char *strncpy(char *dest, const char *src, size_t n)

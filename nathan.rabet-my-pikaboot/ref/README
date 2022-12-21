@@ -1,3 +1,0 @@
-Qemu cmd:
-
-qemu-system-aarch64 -nographic -machine virt -cpu cortex-a72 -kernel pflash.bin  -initrd linux/initramfs.cpio.gz -serial mon:stdio -m 2G -smp 4

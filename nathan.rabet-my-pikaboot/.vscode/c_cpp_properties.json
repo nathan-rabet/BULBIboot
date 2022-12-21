@@ -8,6 +8,7 @@
                 "${workspaceFolder}/build",
                 "${workspaceFolder}/modules/libtomcrypt/src/headers",
                 "${workspaceFolder}/modules/libtommath",
+                "${workspaceFolder}/include",
                 "${workspaceFolder}/include"
             ],
             "defines": [],

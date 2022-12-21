@@ -1,6 +1,7 @@
 #include "kassert.h"
 
 #include "asm.h"
+#include "console.h"
 #include "kstring.h"
 #include "uart.h"
 
@@ -20,7 +21,7 @@ void kassertm(bool condition, const char *msg)
 
 void panic(const char *msg)
 {
-    kputs(CRLF "HeeHooHeeHoo !!" CRLF);
+    kputs(CRLF "Buuuuulbizaaaaaaarre !!" CRLF);
 
     kputs("██████   █████  ███    ██ ██  ██████ " CRLF);
     kputs("██   ██ ██   ██ ████   ██ ██ ██      " CRLF);

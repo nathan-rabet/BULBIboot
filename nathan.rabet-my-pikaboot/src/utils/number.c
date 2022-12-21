@@ -7,6 +7,9 @@
 
 int is_hex(char *s)
 {
+    if (!s)
+        return 0;
+
     if (s[0] == '0' && s[1] == 'x')
         s += 2;
 
@@ -26,6 +29,9 @@ int is_hex(char *s)
 
 int is_int(char *s)
 {
+    if (!s)
+        return 0;
+
     for (size_t i = 0; i < tokenlen(s, " "); i++)
     {
         if (s[i] >= '0' && s[i] <= '9')
@@ -81,6 +87,9 @@ char *itoa64hex_no0x(u64 n)
 
 char *itoa64hex_no0x_ptr(void *addr, u8 size)
 {
+    if (!addr)
+        return NULL;
+
     u64 n = 0;
     switch (size)
     {
