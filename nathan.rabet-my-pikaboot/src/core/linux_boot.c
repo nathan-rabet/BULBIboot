@@ -21,7 +21,7 @@ void linux_boot()
     kputs("Checking kernel CRC32... ");
     u32 crc = crc32((void *)KERNEL_ADDR, KERNEL_BIN_LEN);
     kassertm(crc == KERNEL_CRC, "Kernel CRC32 mismatch");
-    kputs("OK" CRLF);
+    kputs(GREEN_STR("OK") CRLF);
 
     // Print current Exception Level (EL)
     u64 el;

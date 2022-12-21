@@ -4,6 +4,7 @@
 #include "kstring.h"
 #include "number.h"
 #include "pflash.h"
+#include "prompt.h"
 #include "uart.h"
 
 const char *preboot_header = RED_STR(
@@ -50,6 +51,9 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, void *x4)
     // Setup UART0
     pl011_setup((volatile uart_t *)UART0_ADDR);
 
+    // Setup console prefix
+    set_console_prefix("BULBIpreboot (decryption key) " RED_STR(">") " ");
+
     // Print the header
     kputs(preboot_header);
 
@@ -59,36 +63,24 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, void *x4)
     kputs(GREEN_STR("OK") CRLF);
 
     bool aes_valid = false;
-    unsigned char aes_key[AES256_KEY_LEN] = { 0 };
-    unsigned char aes_key_hex[AES256_KEY_LEN * 2] = { 0 };
+    unsigned char aes_key[AES256_KEY_LEN];
+
+    // Ask for the bootloader AES key
+    kputs(BLUE_STR("Enter BULBIboot decryption key (in hex format, e.g "
+                   "'DEADB00F'...): ") CRLF CRLF);
     do
     {
-        // Ask for the bootloader AES key
-        kputs("Enter BULBIboot decryption key (in hex format, e.g "
-              "DEADB00F...): ");
+        memset(aes_key, 0, AES256_KEY_LEN);
 
-        u8 read = 0;
-        memset(aes_key_hex, 0, AES256_KEY_LEN);
-        while (read < sizeof(aes_key_hex) + 1)
-        {
-            char c[] = { kgetc(), 0 };
-            if (*c == '\r' || *c == '\n')
-            {
-                kputs(CRLF);
-                break;
-            }
-
-            if (is_hex(c))
-            {
-                aes_key_hex[read++] = *c;
-                kputc(*c);
-            }
-        }
+        char *aes_key_hex = prompt();
 
         // Convert the key from hex to binary
         for (u8 i = 0; i < AES256_KEY_LEN; i++)
         {
             char c[] = { aes_key_hex[i * 2], aes_key_hex[i * 2 + 1], 0 };
+
+            if (!is_hex(c))
+                break;
             aes_key[i] = hextoi64(c);
         }
 

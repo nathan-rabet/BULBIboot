@@ -41,8 +41,11 @@ void verify_pflash(void *pflash_start)
 bool verify_bootloader_aes_key(const unsigned char *bootloader_aes_key)
 {
     unsigned char *bootloader_aes_key_hash = sha256(bootloader_aes_key, 32);
+
     bool is_verified =
         memcmp(bootloader_aes_key_hash, aes_key_hash, SHA256_DIGEST_LEN) == 0;
+
+    XFREE(bootloader_aes_key_hash);
     return is_verified;
 }
 
