@@ -10,28 +10,28 @@
 #include "stddef.h"
 #include "uart.h"
 
-static const unsigned char kernel_sig[] = {
-#include "thirdparty/arm64/Image.sig.hex"
-};
+// static const unsigned char kernel_sig[] = {
+// #include "thirdparty/arm64/Image.sig.hex"
+// };
 
-static const unsigned char kernel_pub_der_key[] = {
-#include "thirdparty/arm64/Image.pub.der.hex"
-};
+// static const unsigned char kernel_pub_der_key[] = {
+// #include "thirdparty/arm64/Image.pub.der.hex"
+// };
 
 static volatile void *KERNEL_ADDR = NULL;
 static volatile void *DTB_ADDR = NULL;
 
-static bool verify_kernel_signature(void)
-{
-    rsa_key key = { 0 };
-    bool is_parsed =
-        parse_rsa_der(kernel_pub_der_key, sizeof(kernel_pub_der_key), &key);
-    kassertm(is_parsed, "Failed to parse RSA public key");
+// static bool verify_kernel_signature(void)
+// {
+//     rsa_key key = { 0 };
+//     bool is_parsed =
+//         parse_rsa_der(kernel_pub_der_key, sizeof(kernel_pub_der_key), &key);
+//     kassertm(is_parsed, "Failed to parse RSA public key");
 
-    bool is_verified = rsa_verify_sig((void *)KERNEL_ADDR, KERNEL_IMG_LEN,
-                                      kernel_sig, sizeof(kernel_sig), &key);
-    return is_verified;
-}
+//     bool is_verified = rsa_verify_sig((void *)KERNEL_ADDR, KERNEL_IMG_LEN,
+//                                       kernel_sig, sizeof(kernel_sig), &key);
+//     return is_verified;
+// }
 
 void linux_boot()
 {
@@ -55,17 +55,17 @@ void linux_boot()
     else
         kputs(GREEN_STR("OK") CRLF);
 
-    // Checking signature
-    kputs("Checking kernel signature... ");
-    if (!verify_kernel_signature())
-    {
-        kputs(RED_STR("FAILED") CRLF);
-        kputs("Kernel signature verification failed" CRLF);
-        kputs("Aborting..." CRLF);
-        return;
-    }
-    else
-        kputs(GREEN_STR("OK") CRLF);
+    // // Checking signature
+    // kputs("Checking kernel signature... ");
+    // if (!verify_kernel_signature())
+    // {
+    //     kputs(RED_STR("FAILED") CRLF);
+    //     kputs("Kernel signature verification failed" CRLF);
+    //     kputs("Aborting..." CRLF);
+    //     return;
+    // }
+    // else
+    //     kputs(GREEN_STR("OK") CRLF);
 
     // Print current Exception Level (EL)
     u64 el;

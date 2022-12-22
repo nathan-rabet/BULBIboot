@@ -28,10 +28,6 @@ void kmain(void *x0, u64 x1, u64 x2, u64 x3, char *x4)
     kputs("Initializing heap... " CRLF);
     kalloc_init();
 
-    // Initialize crypto
-    kputs("Initializing cryptographic library..." CRLF);
-    init_crypto();
-
     linux_set_dtb_addr(x0);
     (void)x1;
     (void)x2;
