@@ -21,7 +21,7 @@ boot: $(BOOT_IMG) $(BUILD)/$(INITRD) $(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG_KEY_TXT
 	$(QEMU_ADDITIONAL_FLAGS)
 
 .PHONY: boot_gdb
-boot_gdb: COPTIONS += -DDEBUG
+boot_gdb: COPTIONS += -D DEBUG
 boot_gdb: QEMU_ADDITIONAL_FLAGS=-gdb tcp::6666 -S
 boot_gdb: boot
 	
@@ -84,7 +84,5 @@ clean_clean: clean libclean
 ################################################################################
 .PHONY: dependences
 dependences:
-		sudo apt install -y gcc-aarch64-linux-gnu
-		sudo apt install -y bison
-		sudo apt install qemu-system-arm
-		sudo apt install openssl
+	bash dependences.sh
+	$(info Dependences installed successfully!)

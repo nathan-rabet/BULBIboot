@@ -108,8 +108,8 @@ CDEBUG = -g
 CERROR = -W -Werror -Wall -Wextra -Werror
 CSTD = -std=c99
 COPTIONS = -ffreestanding -fno-stack-protector -fno-zero-initialized-in-bss
-COPTIONS += -DBOOTLOADER_BIN_OFFSET=$(shell echo $$(( $(BOOTLOADER_BIN_OFFSET_MB) * 1024 * 1024 )))
-COPTIONS += -DKERNEL_BIN_OFFSET=$(shell echo $$(( $(KERNEL_BIN_OFFSET_MB) * 1024 * 1024 )))
+COPTIONS += -D BOOTLOADER_BIN_OFFSET=$(shell echo $$(( $(BOOTLOADER_BIN_OFFSET_MB) * 1024 * 1024 )))
+COPTIONS += -D KERNEL_BIN_OFFSET=$(shell echo $$(( $(KERNEL_BIN_OFFSET_MB) * 1024 * 1024 )))
 COPTIM = -O3
 
 ################################################################################

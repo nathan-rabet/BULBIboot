@@ -9,7 +9,7 @@ $(LIB_TOMCRYPT): lib/libtomcrypt $(LIB_TOMMATH)
 	$(MAKE) -C lib/libtomcrypt install \
 	PREFIX=$(shell pwd)/$(BUILD)/lib/libtomcrypt \
 	IGNORE_SPEED=1 \
-	CFLAGS="-g -DUSE_LTM -DARGTYPE=4 -I$(shell pwd)/$(LIB_TOMMATH_HEADERS)"
+	CFLAGS="-g -D USE_LTM -D ARGTYPE=4 -I$(shell pwd)/$(LIB_TOMMATH_HEADERS)"
 	EXTRALIBS=$(LIB_TOMMATH)
 
 ################################################################################
@@ -23,7 +23,7 @@ $(LIB_TOMMATH): lib/libtommath
 	$(MAKE) -C lib/libtommath install \
 	PREFIX=$(shell pwd)/$(BUILD)/lib/libtommath \
 	IGNORE_SPEED=1 \
-	CFLAGS="-g -DARGTYPE=4 -DMP_NO_DEV_URANDOM -U__linux__"
+	CFLAGS="-g -D ARGTYPE=4 -D MP_NO_DEV_URANDOM -U__linux__"
 
 .PHONY: libclean
 libclean:

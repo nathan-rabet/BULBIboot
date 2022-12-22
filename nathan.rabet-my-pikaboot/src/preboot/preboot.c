@@ -48,10 +48,8 @@ bool verify_bootloader_aes_key(const unsigned char *bootloader_aes_key)
 void decrypt_bootloader(void *bootloader_start,
                         const unsigned char *bootloader_aes_key)
 {
-    size_t bootloader_bin_len = BOOTLOADER_IMG_LEN;
-    size_t bootloader_bin_addr = BOOTLOADER_IMG_OFFSET;
-    bool is_decrypted = aes256cbc_decrypt(
-        (unsigned char *)bootloader_start + bootloader_bin_addr,
-        bootloader_bin_len, bootloader_aes_key);
+    bool is_decrypted =
+        aes256cbc_decrypt((unsigned char *)bootloader_start, BOOTLOADER_IMG_LEN,
+                          bootloader_aes_key);
     kassertm(is_decrypted, "Failed to decrypt bootloader");
 }
