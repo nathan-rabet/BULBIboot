@@ -3,7 +3,7 @@
         {
             "type": "gdb",
             "request": "attach",
-            "name": "GDB DECRYPTOR - QEMU",
+            "name": "GDB PREBOOT - QEMU",
             "executable": "${workspaceFolder}/build/decryptor_bulbiboot.elf",
             "target": "localhost:6666",
             "remote": true,
