@@ -17,9 +17,14 @@ typedef struct alloc_node_t
     char block[];
 } __attribute__((packed)) alloc_node_t;
 
+extern u64 STACK_TOP;
+#define STACK_TOP_ADDR ((void *)&STACK_TOP)
+
 extern alloc_node_t HEAP_START;
 #define HEAP_START_ADDR (&HEAP_START)
-#define HEAP_SIZE (8 * 1024 * 1024) // 8 MiB
+
+// 20 MB
+#define HEAP_SIZE (20 * 1024 * 1024)
 
 #define SET_ALLOC_NODE_CANARY(node)                                            \
     node->coin = 0xdeadbeefdeadbeef;                                           \

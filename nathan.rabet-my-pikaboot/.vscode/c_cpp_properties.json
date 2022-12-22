@@ -6,8 +6,8 @@
                 "${default}",
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/build",
-                "${workspaceFolder}/modules/libtomcrypt/src/headers",
-                "${workspaceFolder}/modules/libtommath",
+                "${workspaceFolder}/lib/libtomcrypt/src/headers",
+                "${workspaceFolder}/lib/libtommath",
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/include"
             ],
