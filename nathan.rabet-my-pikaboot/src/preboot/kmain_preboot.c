@@ -34,13 +34,6 @@ const char *preboot_header = RED_STR(
                                      "                          (____/         "
                                      "             ") CRLF CRLF;
 
-static void init_crypto(void)
-{
-    ltc_mp = ltm_desc;
-    register_all_ciphers();
-    register_all_hashes();
-}
-
 void kmain(u64 x0, u64 x1, u64 x2, u64 x3, void *x4)
 {
     // Setup UART0

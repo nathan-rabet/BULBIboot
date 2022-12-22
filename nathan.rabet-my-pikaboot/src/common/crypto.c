@@ -7,6 +7,13 @@
 #include "kstring.h"
 #include "number.h"
 
+void init_crypto(void)
+{
+    ltc_mp = ltm_desc;
+    register_all_ciphers();
+    register_all_hashes();
+}
+
 unsigned char *sha512(const unsigned char *buf, size_t len)
 {
     unsigned char *hash = XMALLOC(SHA512_DIGEST_LEN);

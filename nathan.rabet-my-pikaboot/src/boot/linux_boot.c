@@ -23,26 +23,13 @@ static volatile void *DTB_ADDR = NULL;
 
 static bool verify_kernel_signature(void)
 {
-    kputs("Checking kernel signature... ");
-    unsigned char *kernel_hash = sha512((void *)KERNEL_ADDR, KERNEL_IMG_LEN);
-
     rsa_key key = { 0 };
     bool is_parsed =
         parse_rsa_der(kernel_pub_der_key, sizeof(kernel_pub_der_key), &key);
     kassertm(is_parsed, "Failed to parse RSA public key");
 
-    bool is_verified = rsa_verify_sig(kernel_hash, SHA512_DIGEST_LEN,
+    bool is_verified = rsa_verify_sig((void *)KERNEL_ADDR, KERNEL_IMG_LEN,
                                       kernel_sig, sizeof(kernel_sig), &key);
-    if (!is_verified)
-    {
-        kputs(RED_STR("FAILED") CRLF);
-        kputs("Kernel signature verification failed" CRLF);
-        kputs("Aborting..." CRLF);
-    }
-    else
-        kputs(GREEN_STR("OK") CRLF);
-
-    XFREE(kernel_hash);
     return is_verified;
 }
 
@@ -69,8 +56,16 @@ void linux_boot()
         kputs(GREEN_STR("OK") CRLF);
 
     // Checking signature
+    kputs("Checking kernel signature... ");
     if (!verify_kernel_signature())
+    {
+        kputs(RED_STR("FAILED") CRLF);
+        kputs("Kernel signature verification failed" CRLF);
+        kputs("Aborting..." CRLF);
         return;
+    }
+    else
+        kputs(GREEN_STR("OK") CRLF);
 
     // Print current Exception Level (EL)
     u64 el;

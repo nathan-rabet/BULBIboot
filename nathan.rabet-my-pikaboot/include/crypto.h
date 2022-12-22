@@ -14,6 +14,11 @@ extern const unsigned char pflash_bin_sig;
 #include <tomcrypt.h>
 
 /**
+ * @brief Initialize the tomcrypt library
+ */
+void init_crypto(void);
+
+/**
  * @brief Compute the SHA512 hash of a buffer
  *
  * @note This function uses the tomcrypt library
