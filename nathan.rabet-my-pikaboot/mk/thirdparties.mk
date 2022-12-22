@@ -3,14 +3,14 @@ LINUX=linux-5.19.17
 
 $(BUILD)/$(BUSYBOX):
 	mkdir -p $(BUILD)
-	curl -LO https://busybox.net/downloads/$(BUSYBOX).tar.bz2 --output $(BUILD)/$(BUSYBOX).tar.bz2
+	wget https://busybox.net/downloads/$(BUSYBOX).tar.bz2 --output-document=$(BUILD)/$(BUSYBOX).tar.bz2
 	tar jxvf $(BUILD)/$(BUSYBOX).tar.bz2 -C $(BUILD)
 	cp cfg/busybox_cfg $(BUILD)/$(BUSYBOX)/.config
 
 $(BUILD)/$(LINUX):
 	mkdir -p $(BUILD)
 	wget https://cdn.kernel.org/pub/linux/kernel/v5.x/$(LINUX).tar.xz --output-document=$(BUILD)/$(LINUX).tar.xz
-	tar -Jxvf $(BUILD)/$(LINUX).tar.xz
+	tar -Jxvf $(BUILD)/$(LINUX).tar.xz -C $(BUILD)
 
 $(BUILD)/$(LINUX)/.config: $(BUILD)/$(LINUX)
 	mkdir -p $(BUILD)

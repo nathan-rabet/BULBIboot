@@ -20,23 +20,23 @@ $(BUILD)/$(BOOTLOADER_PEM_PRIVATE):
 	openssl genrsa -out $@ 2048
 
 # Kernel signature
-$(BUILD)/$(KERNEL_SIG_HEX): $(BUILD)/$(KERNEL_SIG)
+$(BUILD)/$(KERNEL_SIG_HEX): $(BUILD)/$(KERNEL_SIG) $(BUILD)/thirdparty/$(ARCH)
 	mkdir -p $(BUILD)
 	xxd -p -c 16 $< | sed 's/\(..\)/0x\1, /g' | sed '$$s/,$$//' > $@
 
-$(BUILD)/$(KERNEL_SIG): $(BUILD)/$(KERNEL) $(BUILD)/$(KERNEL_PEM_PRIVATE)
+$(BUILD)/$(KERNEL_SIG): $(BUILD)/$(KERNEL) $(BUILD)/$(KERNEL_PEM_PRIVATE) $(BUILD)/thirdparty/$(ARCH)
 	mkdir -p $(BUILD)
 	openssl dgst -sha256 -sign $(BUILD)/$(KERNEL_PEM_PRIVATE) < $< > $@ 
 
-$(BUILD)/$(KERNEL_DER_PUBLIC_HEX): $(BUILD)/$(KERNEL_DER_PUBLIC)
+$(BUILD)/$(KERNEL_DER_PUBLIC_HEX): $(BUILD)/$(KERNEL_DER_PUBLIC) $(BUILD)/thirdparty/$(ARCH)
 	mkdir -p $(BUILD)
 	xxd -p -c 16 $< | sed 's/\(..\)/0x\1, /g' | sed '$$s/,$$//' > $@
 	
-$(BUILD)/$(KERNEL_DER_PUBLIC): $(BUILD)/$(KERNEL_PEM_PRIVATE)
+$(BUILD)/$(KERNEL_DER_PUBLIC): $(BUILD)/$(KERNEL_PEM_PRIVATE) $(BUILD)/thirdparty/$(ARCH)
 	mkdir -p $(BUILD)
 	openssl rsa -in $< -pubout -outform DER -out $@
 
-$(BUILD)/$(KERNEL_PEM_PRIVATE):
+$(BUILD)/$(KERNEL_PEM_PRIVATE): $(BUILD)/thirdparty/$(ARCH)
 	mkdir -p $(BUILD)
 	openssl genrsa -out $@ 2048
 

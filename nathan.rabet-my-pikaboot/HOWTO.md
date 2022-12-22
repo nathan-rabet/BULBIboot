@@ -11,6 +11,7 @@ When the bootloader starts, it will check the signature of the bootloader. If th
 After the signature check, the preboot system will ask you to enter a key. This key is used to decrypt the BULBIboot bootloader. If the key is valid, the preboot system will decrypt the bootloader and boot to it. Otherwise, the preboot system will print an error message and ask you to enter a new key.
 
 > Note that the key must be written in hexadecimal format.
+> The hexadecimal key can be found in `build`as a `.txt` file.
 
 ## BULBIboot bootloader
 
