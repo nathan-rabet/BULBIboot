@@ -26,7 +26,7 @@ $(BUILD)/thirdparty/$(ARCH):
 	mkdir -p $@
 
 $(BUILD)/$(KERNEL): $(BUILD)/$(LINUX)/arch/$(ARCH)/boot/Image $(BUILD)/thirdparty/$(ARCH)
-mkdir -p $(BUILD)
+	mkdir -p $(BUILD)
 	cp $< $@
 
 $(BUILD)/$(BUSYBOX)/.config: $(BUILD)/$(BUSYBOX)
