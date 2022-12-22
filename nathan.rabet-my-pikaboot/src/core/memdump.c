@@ -42,8 +42,6 @@ void memdump(u64 start_addr, u64 range, u64 load_size)
 
     for (u64 i = 0; i < range; i += MEMDUMP_LINE_SIZE)
     {
-        kputs(CRLF);
-
         // Left side: address
         kputs(aligned_numtoi64(itoa64hex(start_addr + i), MEMDUMP_LINE_SIZE));
         kputs(":\t");
@@ -83,5 +81,6 @@ void memdump(u64 start_addr, u64 range, u64 load_size)
                 kputc(' ');
         }
         kputs(" |");
+        kputs(CRLF);
     }
 }

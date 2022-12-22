@@ -31,6 +31,8 @@ BOOTLOADER_IMG=$(BOOTLOADER_NAME).img
 DECRYPTOR_ELF=decryptor_$(BOOTLOADER_ELF)
 DECRYPTOR_IMG=decryptor_$(BOOTLOADER_IMG)
 
+PFLASH_LEN_MB=512
+PFLASH_LEN_BYTES=$(shell echo $$(( $(PFLASH_LEN_MB) * 1024 * 1024 )))
 DECRYPTOR_BIN_OFFSET_MB=0
 BOOTLOADER_BIN_OFFSET_MB=10
 KERNEL_BIN_OFFSET_MB=50
@@ -158,12 +160,12 @@ $(BUILD)/$(BOOTLOADER_IMG): $(BUILD)/$(BOOTLOADER_ELF)
 	$(CROSS_COMPILE)objcopy -O binary $< $@
 
 $(BUILD)/$(PFLASH_BIN): $(BUILD)/$(BOOTLOADER_IMG) $(KERNEL_PATH)
-	$(V)dd if=/dev/zero of=$@ bs=1M count=512 seek=$(BOOTLOADER_BIN_OFFSET_MB)
+	$(V)dd if=/dev/zero of=$@ bs=1M count=$(PFLASH_LEN_MB) seek=$(BOOTLOADER_BIN_OFFSET_MB)
 	$(V)dd if=$(BUILD)/$(BOOTLOADER_IMG) of=$@ conv=notrunc bs=1M count=10
 	$(V)dd if=$(KERNEL_PATH) of=$@ conv=notrunc bs=1M seek=$(KERNEL_BIN_OFFSET_MB)
 
 $(BUILD)/$(ENCRYPTED_PFLASH_BIN): $(BUILD)/$(DECRYPTOR_IMG) $(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG) $(KERNEL_PATH)
-	$(V)dd if=/dev/zero of=$@ bs=1M count=512 seek=$(DECRYPTOR_BIN_OFFSET_MB)
+	$(V)dd if=/dev/zero of=$@ bs=1M count=$(PFLASH_LEN_MB) seek=$(DECRYPTOR_BIN_OFFSET_MB)
 	$(V)dd if=$(BUILD)/$(DECRYPTOR_IMG) of=$@ conv=notrunc bs=1M count=$(BOOTLOADER_BIN_OFFSET_MB)
 	$(V)dd if=$(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG) of=$@ conv=notrunc bs=1M seek=$(BOOTLOADER_BIN_OFFSET_MB) count=10
 	$(V)dd if=$(KERNEL_PATH) of=$@ conv=notrunc bs=1M seek=$(KERNEL_BIN_OFFSET_MB)
@@ -342,6 +344,8 @@ $(BUILD)/%.o: COPTIONS += -DBOOTLOADER_CRC=$(shell crc32 $(BUILD)/$(BOOTLOADER_I
 $(BUILD)/%.o: COPTIONS += -DKERNEL_BIN_LEN=$(shell wc -c $(KERNEL_PATH) | cut -d' ' -f1)
 $(BUILD)/%.o: COPTIONS += -DKERNEL_CRC=$(shell crc32 $(KERNEL_PATH) | sed 's/^\(.*\)$$/0x\1/')
 $(BUILD)/%.o: COPTIONS += -DRAM_SIZE=$(RAM_SIZE_BYTES)
+$(BUILD)/%.o: COPTIONS += -DPFLASH_LEN=$(PFLASH_LEN_BYTES)
+$(BUILD)/%.o: COPTIONS += -DBOOTLOADER_BIN_OFFSET=$(shell echo $$(($(BOOTLOADER_BIN_OFFSET_MB) * 1024 * 1024)))
 $(BUILD)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(COPTIONS) $(CSTD) $(CINCLUDE) $(CDEBUG) $(CERROR) $(COPTIM) -c $< -o $@

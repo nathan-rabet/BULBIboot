@@ -15,7 +15,7 @@ _start:
 
     // Initialize the VFPU (macro)
     init_vfpu
-
+    
     // Call kmain function
     bl kmain
 

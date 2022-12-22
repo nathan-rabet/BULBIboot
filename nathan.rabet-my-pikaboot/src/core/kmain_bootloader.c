@@ -17,7 +17,7 @@
 #include "uart.h"
 #include "virt.h"
 
-void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
+void kmain(void *x0, u64 x1, u64 x2, u64 x3, char *x4)
 {
     // Initialize malloc heap
     kalloc_init();
@@ -25,11 +25,11 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
     // Setup UART0
     pl011_setup((volatile uart_t *)UART0_ADDR);
 
-    linux_set_dtb_addr((void *)x0);
+    linux_set_dtb_addr(x0);
     (void)x1;
     (void)x2;
     (void)x3;
-    linux_set_kernel_addr((char *)x4 + 0x3200000);
+    linux_set_kernel_addr(x4 + 0x3200000);
 
     // Console input buffer
     set_console_prefix("BULBIboot"
@@ -104,8 +104,8 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
             kputs(CRLF);
             char *buf_tok = NULL;
 
-            u64 start_addr =
-                (u64)strtok_r(buf + sizeof("memtest") - 1, " ", &buf_tok);
+            char *start_addr =
+                strtok_r(buf + sizeof("memtest") - 1, " ", &buf_tok);
             u64 size = (u64)strtok_r(NULL, " ", &buf_tok);
             u64 granularity = (u64)strtok_r(NULL, " ", &buf_tok);
 
@@ -125,7 +125,7 @@ void kmain(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4)
                 }
                 else
                 {
-                    start_addr = numtoi64((char *)start_addr);
+                    start_addr = (char *)numtoi64(start_addr);
                     size = numtoi64((char *)size);
                     granularity = numtoi64((char *)granularity);
                     memtest(start_addr, size, granularity);

@@ -11,6 +11,6 @@
  * @param granularity The byte granularity of the test.
  * Can be 1, 2, 4 or 8.
  */
-void memtest(u64 base_addr, u64 size, u8 granularity);
+void memtest(void *base_addr, u64 size, u8 granularity);
 
 #endif /* MEMTEST_H */

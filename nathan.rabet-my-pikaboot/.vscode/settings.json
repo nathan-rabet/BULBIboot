@@ -54,7 +54,8 @@
         "pflash.h": "c",
         "asm.h": "c",
         "time.h": "c",
-        "console.h": "c"
+        "console.h": "c",
+        "emergency_boot.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

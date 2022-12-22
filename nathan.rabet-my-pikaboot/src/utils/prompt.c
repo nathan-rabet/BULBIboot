@@ -49,10 +49,6 @@ char *prompt(void)
     buf_i = 0;
     up_key_counter = 0;
 
-    // Reset history
-    for (u32 i = 0; i < NB_HISTORY; i++)
-        memset(history[i], 0, BUF_SIZE);
-
     kputs(prompt_text);
     while (buf_i < sizeof(buf))
     {
