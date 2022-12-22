@@ -2,7 +2,6 @@
     "C_Cpp.files.exclude": {
         "**/.vscode": true,
         "**/.vs": true,
-        "modules/**": true,
         "build/**": true
     },
     "files.associations": {
@@ -51,11 +50,11 @@
         "tommath_class.h": "c",
         "tommath.h": "c",
         "*.hex": "c",
-        "pflash.h": "c",
+        "preboot.h": "c",
         "asm.h": "c",
         "time.h": "c",
         "console.h": "c",
         "emergency_boot.h": "c"
     },
-    "C_Cpp.errorSquiggles": "enabled"
+    "C_Cpp.errorSquiggles": "Enabled"
 }

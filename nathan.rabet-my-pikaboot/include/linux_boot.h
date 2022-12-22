@@ -1,9 +1,9 @@
 #ifndef LINUX_BOOT_H
 #define LINUX_BOOT_H
 
-#ifndef KERNEL_BIN_LEN
-#    define KERNEL_BIN_LEN 0
-#    error "KERNEL_BIN_LEN must be defined"
+#ifndef KERNEL_IMG_LEN
+#    define KERNEL_IMG_LEN 0
+#    error "KERNEL_IMG_LEN must be defined"
 #endif
 
 #ifndef KERNEL_CRC
