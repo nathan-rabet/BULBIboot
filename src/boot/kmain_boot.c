@@ -32,7 +32,7 @@ void kmain(void *x0, u64 x1, u64 x2, u64 x3, char *x4)
     (void)x1;
     (void)x2;
     (void)x3;
-    linux_set_kernel_addr(x4 + 0x3200000);
+    linux_set_kernel_addr(x4 + KERNEL_BIN_OFFSET);
 
     // Console input buffer
     set_console_prefix("BULBIboot"

@@ -99,7 +99,7 @@ LIB_TOMMATH = $(BUILD)/lib/libtommath/lib/libtommath.a
 LIB_TOMMATH_HEADERS = lib/libtommath
 
 # LibGCC (Needed for __udivti3 in libtommath)
-LIB_GCC=$(shell locate libgcc.a | grep "aarch64" | grep "linux-gnu" | head -n 1)
+LIB_GCC=/lib/gcc-cross/aarch64-linux-gnu/12/libgcc.a
 
 ################################################################################
 # Compilator options

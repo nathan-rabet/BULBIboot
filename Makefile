@@ -13,7 +13,7 @@ boot: $(BOOT_IMG) $(BUILD)/$(INITRD) $(BUILD)/$(ENCRYPTED_BOOTLOADER_IMG_KEY_TXT
 	-cpu cortex-a72 \
 	-kernel $(BOOT_IMG) \
 	-initrd $(BUILD)/$(INITRD) \
-	-serial pty \
+	-serial mon:stdio \
 	-m 2G \
 	-smp 1 \
 	-d in_asm \
