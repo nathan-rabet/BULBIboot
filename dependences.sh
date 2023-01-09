@@ -23,6 +23,7 @@ elif [ -x "$(command -v yum)" ]; then
     sudo yum update
     sudo yum install -y gcc-aarch64-linux-gnu
     sudo yum install -y bison
+    sudo yum install -y flex
     sudo yum install -y qemu-system-arm
     sudo yum install -y openssl
 else
